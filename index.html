@@ -93,6 +93,8 @@
     <div class="grid sm:grid-cols-2 gap-3">
       <label class="text-sm">Kelas
         <select id="kelas" class="mt-1 w-full rounded-lg border border-emerald-200 bg-emerald-50/50 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-400"></select></label>
+            <label class="text-sm sm:col-span-2">Pilih nama siswa
+        <select id="pilih" class="mt-1 w-full rounded-lg border border-emerald-200 bg-emerald-50/50 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-400"></select></label>
       <label class="text-sm">Nomor absen
         <input id="absen" type="number" min="1" inputmode="numeric" placeholder="Contoh: 12" class="mt-1 w-full rounded-lg border border-emerald-200 bg-emerald-50/50 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-400"></label>
       <label class="text-sm">Nama siswa
@@ -160,7 +162,7 @@
 </div>
 
 <div id="cert"></div>
-
+<script src="siswa.js"></script>
 <script>
 /* ============ PENGATURAN ============ */
 const CONFIG = {
@@ -294,8 +296,15 @@ function info(){
   const f=p=>r&&r[p]?`${NAMA[p]} ✓ (${esc(r[p].penguji)}, ${fmtTgl(r[p].tgl)})`:`${NAMA[p]} belum dinilai`;
   el.innerHTML=r?`Data siswa ditemukan — ${f("W")} · ${f("S")}. Menyimpan hanya memperbarui bagian yang Anda nilai.`:"Siswa baru di kelas ini — belum ada data penilaian.";
 }
+function rosterName(k,a){ const l=(window.SISWA||{})[k]; return (l&&a>0&&l[a-1])||""; }
+function fillPilih(){
+  const k=$("kelas").value, l=(window.SISWA||{})[k]||[], a=+$("absen").value||0;
+  $("pilih").innerHTML='<option value="">— Pilih nama siswa —</option>'+l.map((n,i)=>`<option value="${i+1}">${i+1}. ${esc(n)}</option>`).join("");
+  $("pilih").value=l[a-1]?String(a):"";
+}
 function lookup(){
   const key=mkKey(), r=key?DB.find(x=>x.key===key):null;
+  const rn=rosterName($("kelas").value,+$("absen").value);
   if(r){
     if(!$("nama").value.trim()||$("nama").value===autoName){ $("nama").value=r.nama; autoName=r.nama; }
     parts().forEach(p=>{ if(r[p]) fl[p]=new Set(r[p].kode); });
@@ -303,9 +312,14 @@ function lookup(){
   } else if(loadedKey){
     fl={W:new Set(),S:new Set()}; if($("nama").value===autoName) $("nama").value=""; loadedKey=null; autoName="";
   }
-  syncButtons(); info(); refresh();
+  if(!r){
+    if(rn){ if(!$("nama").value.trim()||$("nama").value===autoName){ $("nama").value=rn; autoName=rn; } }
+    else if(autoName&&$("nama").value===autoName){ $("nama").value=""; autoName=""; }
+  }
+  fillPilih(); syncButtons(); info(); refresh();
 }
 ["kelas","absen"].forEach(id=>$(id).addEventListener("change",lookup));
+$("pilih").addEventListener("change",()=>{ $("absen").value=$("pilih").value; $("nama").value=""; autoName=""; lookup(); });
 ["nama","tgl"].forEach(id=>$(id).addEventListener("input",refresh));
 function setMode(m){
   mode=m; ls.set(KEYMODE,m);
@@ -314,8 +328,9 @@ function setMode(m){
   lookup();
 }
 function resetForm(){
-  ["nama","absen"].forEach(id=>$(id).value=""); fl={W:new Set(),S:new Set()}; loadedKey=null; autoName="";
-  syncButtons(); info(); refresh(); window.scrollTo({top:0,behavior:"smooth"});
+  const nx=(+$("absen").value||0)+1, ada=rosterName($("kelas").value,nx);
+  $("nama").value=""; $("absen").value=ada?nx:""; fl={W:new Set(),S:new Set()}; loadedKey=null; autoName="";
+  lookup(); window.scrollTo({top:0,behavior:"smooth"});
 }
 function valid(){
   if(!$("kelas").value){ toast("Pilih kelas terlebih dahulu"); $("kelas").focus(); return false; }
