@@ -74,6 +74,7 @@
   <div class="flex flex-wrap gap-2 mb-5">
     <button id="tabN" onclick="showTab('n')">📝 Penilaian</button>
     <button id="tabR" onclick="showTab('r')">📊 Rekap Kelas</button>
+    <button id="tabG" onclick="showTab('g')">📈 Grafik Laporan</button>
     <button onclick="openGuide()" class="px-4 py-2 rounded-xl text-sm font-semibold bg-white border border-emerald-300 text-emerald-900">📖 Panduan Bacaan Tarjih</button>
   </div>
 
@@ -138,6 +139,19 @@
   </section>
   <div id="sumKelas" class="overflow-x-auto mb-4"></div>
   <div class="bg-white rounded-2xl border border-emerald-100 overflow-x-auto"><table id="tblRekap" class="w-full text-sm"></table></div>
+</div>
+  <div id="pageG" class="hidden">
+  <section class="bg-white rounded-2xl border border-emerald-100 p-5 mb-4">
+    <h2 class="font-bold text-emerald-900 mb-3">Grafik Laporan Hasil Penilaian</h2>
+    <div class="flex flex-wrap gap-2 items-end">
+      <label class="text-sm">Tingkat
+        <select id="gTingkat" onchange="gKelasOpt();renderGrafik()" class="mt-1 block rounded-lg border border-emerald-200 bg-emerald-50/50 px-3 py-2"></select></label>
+      <label class="text-sm">Kelas
+        <select id="gKelas" onchange="renderGrafik()" class="mt-1 block rounded-lg border border-emerald-200 bg-emerald-50/50 px-3 py-2"></select></label>
+      <button onclick="cetakGrafik()" class="px-4 py-2 rounded-xl bg-amber-500 text-white text-sm font-semibold hover:bg-amber-600">🖨 Cetak Laporan Grafik</button>
+    </div>
+  </section>
+  <div id="grafikOut"></div>
 </div>
 </div>
 
@@ -341,9 +355,14 @@ function valid(){
 
 /* ============ TAB, MODAL ============ */
 function showTab(t){
-  $("pageN").classList.toggle("hidden",t!=="n"); $("pageR").classList.toggle("hidden",t!=="r"); $("bar").classList.toggle("hidden",t!=="n");
-  $("tabN").className=TAB+(t==="n"?ON:OFF); $("tabR").className=TAB+(t==="r"?ON:OFF);
-  if(t==="r"){ renderRekap(); syncAll(); } window.scrollTo(0,0);
+  ["n","r","g"].forEach(x=>{
+    $("page"+x.toUpperCase()).classList.toggle("hidden",t!==x);
+    $("tab"+x.toUpperCase()).className=TAB+(t===x?ON:OFF);
+  });
+  $("bar").classList.toggle("hidden",t!=="n");
+  if(t==="r"){ renderRekap(); syncAll(); }
+  if(t==="g"){ renderGrafik(); syncAll(); }
+  window.scrollTo(0,0);
 }
 function openGuide(){
   $("mbody").innerHTML=GUIDE.map(g=>`<div class="rounded-xl border border-emerald-200 p-4 bg-emerald-50/40">
@@ -385,7 +404,9 @@ async function syncAll(manual){
     const j=await api("list"), srv=j.rows.filter(x=>x.Key).map(fromRow), loc=DB.filter(r=>["W","S"].some(p=>r[p]&&r[p].pend));
     loc.forEach(l=>{ const s=srv.find(x=>x.key===l.key); if(!s) srv.push(l); else ["W","S"].forEach(p=>{ if(l[p]&&l[p].pend) s[p]=l[p]; }); });
     DB=srv; saveDB(); setSync("ok"); if(manual) toast("Data diperbarui ✓");
-    if(!$("pageR").classList.contains("hidden")) renderRekap(); info();
+    if(!$("pageR").classList.contains("hidden")) renderRekap();
+if(!$("pageG").classList.contains("hidden")) renderGrafik();
+info();
   }catch(e){ handleErr(e); if(manual) toast("Tidak dapat terhubung ke server. Periksa internet."); }
 }
 async function simpan(){
@@ -515,7 +536,104 @@ function certHTML(rec){
 function cetakFrom(rec){ $("cert").innerHTML=certHTML(rec); setTimeout(()=>window.print(),150); }
 function cetakForm(){ if(valid()) cetakFrom(currentRec()); }
 function cetakKey(k){ const r=DB.find(x=>x.key===k); if(r) cetakFrom(r); }
+/* ============ GRAFIK LAPORAN ============ */
+const tingkatOf = k => parseInt(k)||0;
+const PCOL = {"Sangat Menguasai":"#059669","Menguasai":"#14b8a6","Cukup":"#f59e0b","Perlu Bimbingan":"#f97316"};
+const WCOL = {W:"#0284c7", S:"#047857"};
 
+function gKelasOpt(){
+  const t=$("gTingkat").value;
+  const l=kelasList().filter(k=>!t||tingkatOf(k)==t);
+  $("gKelas").innerHTML='<option value="">'+(t?"Semua kelas tingkat "+t:"Semua kelas")+'</option>'+l.map(k=>`<option>${k}</option>`).join("");
+}
+function initGrafikFilter(){
+  $("gTingkat").innerHTML='<option value="">Semua tingkat (Kelas 1-6)</option>'+[1,2,3,4,5,6].map(n=>`<option value="${n}">Kelas ${n}</option>`).join("");
+  gKelasOpt();
+}
+function gBar(label,val,color,txt){
+  return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:5px;break-inside:avoid">
+    <div style="width:42%;font-size:12px;line-height:1.3">${label}</div>
+    <div style="flex:1;background:#ecf5ee;border:1px solid #cfe5d6;border-radius:99px;height:16px;overflow:hidden"><div style="width:${val}%;height:100%;background:${color}"></div></div>
+    <div style="width:115px;font-size:12px;font-weight:600;text-align:right">${txt}</div></div>`;
+}
+function gBox(title,inner){
+  return `<div style="border:1px solid #cfe5d6;border-radius:12px;padding:14px;margin-bottom:12px;background:#fff;break-inside:avoid">
+    <div style="font-weight:700;font-size:14px;color:#14532d;margin-bottom:8px">${title}</div>${inner}</div>`;
+}
+function gCard(title,val,color){
+  return `<div style="flex:1;min-width:130px;border:1px solid #cfe5d6;border-radius:12px;padding:10px;background:#fff;text-align:center">
+    <div style="font-size:11px;color:#3f6150">${title}</div><div style="font-size:24px;font-weight:800;color:${color}">${val}</div></div>`;
+}
+function grafikHTML(){
+  const t=$("gTingkat").value, k=$("gKelas").value;
+  const d=DB.filter(r=>(!t||tingkatOf(r.kelas)==t)&&(!k||r.kelas===k));
+  const label=k?"Kelas "+k:t?"Kelas "+t+" (semua kelas)":"Seluruh Kelas 1-6";
+  if(!d.length) return gBox("Cakupan: "+esc(label),'<div style="font-size:13px">Belum ada data penilaian untuk pilihan ini.</div>');
+  const avg=a=>a.length?Math.round(a.reduce((x,y)=>x+y,0)/a.length):0;
+  const pc=(rs,p)=>rs.filter(r=>r[p]).map(r=>metrik(p,r[p].kode).persen);
+  const fin=d.map(overall).filter(Boolean).map(o=>o.persen);
+  const nW=d.filter(r=>r.W).length, nS=d.filter(r=>r.S).length;
+
+  let html=`<div style="font-size:13px;margin-bottom:8px">Cakupan laporan: <b>${esc(label)}</b></div>
+  <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px">
+    ${gCard("Jumlah siswa",d.length,"#14532d")}
+    ${gCard("Rata-rata Wudhu ("+nW+" siswa)",avg(pc(d,"W"))+"%",WCOL.W)}
+    ${gCard("Rata-rata Shalat ("+nS+" siswa)",avg(pc(d,"S"))+"%",WCOL.S)}
+    ${gCard("Rata-rata Akhir",avg(fin)+"%","#b45309")}
+  </div>`;
+
+  // 1. Distribusi predikat
+  ["W","S"].forEach(p=>{
+    const rs=d.filter(r=>r[p]), c={};
+    rs.forEach(r=>{ const m=metrik(p,r[p].kode); c[m.pred]=(c[m.pred]||0)+1; });
+    const inner=rs.length?["Sangat Menguasai","Menguasai","Cukup","Perlu Bimbingan"].map(pr=>{
+      const n=c[pr]||0, v=Math.round(n/rs.length*100); return gBar(pr,v,PCOL[pr],`${n} siswa (${v}%)`);
+    }).join(""):'<div style="font-size:12px">Belum ada penilaian.</div>';
+    html+=gBox(`Distribusi Predikat ${NAMA[p]} (${rs.length} siswa dinilai)`,inner);
+  });
+
+  // 2. Perbandingan per tingkat / kelas
+  const grp=k?[[k,r=>r.kelas===k]]
+    :t?kelasList().filter(x=>tingkatOf(x)==t).map(x=>[x,r=>r.kelas===x])
+    :[1,2,3,4,5,6].map(n=>["Kelas "+n,r=>tingkatOf(r.kelas)===n]);
+  const legend=`<div style="font-size:11px;margin-bottom:6px"><span style="display:inline-block;width:10px;height:10px;background:${WCOL.W};margin-right:4px"></span>Wudhu
+    <span style="display:inline-block;width:10px;height:10px;background:${WCOL.S};margin:0 4px 0 12px"></span>Shalat</div>`;
+  const cmp=grp.map(([g,f])=>{
+    const rs=d.filter(f); if(!rs.length) return "";
+    const w=avg(pc(rs,"W")), s=avg(pc(rs,"S"));
+    return `<div style="margin-bottom:8px;break-inside:avoid"><div style="font-size:12px;font-weight:700;margin-bottom:2px">${esc(g)} (${rs.length} siswa)</div>
+      ${gBar("Wudhu",w,WCOL.W,w+"%")}${gBar("Shalat",s,WCOL.S,s+"%")}</div>`;
+  }).join("");
+  html+=gBox(k?"Rata-rata Capaian "+esc(k):t?"Perbandingan Rata-rata per Kelas (Tingkat "+t+")":"Perbandingan Rata-rata per Tingkat (Kelas 1-6)",legend+(cmp||"Belum ada data."));
+
+  // 3. Per aspek
+  let lemah=null;
+  ["W","S"].forEach(p=>{
+    const rs=d.filter(r=>r[p]);
+    const inner=rs.length?DATA[p].map((x,i)=>{
+      const baik=rs.filter(r=>!r[p].kode.includes(i)).length, v=Math.round(baik/rs.length*100);
+      if(!lemah||v<lemah.v) lemah={v,p,t:x[1]};
+      return gBar(cap(x[1]),v,v>=75?"#059669":v>=60?"#f59e0b":"#f97316",`${v}% baik`);
+    }).join(""):'<div style="font-size:12px">Belum ada penilaian.</div>';
+    html+=gBox(`Capaian per Aspek ${NAMA[p]} (% siswa yang sudah baik)`,inner);
+  });
+  if(lemah) html+=gBox("Kesimpulan Otomatis",`<div style="font-size:12.5px;line-height:1.6;text-align:justify">Pada cakupan <b>${esc(label)}</b>, rata-rata capaian wudhu <b>${avg(pc(d,"W"))}%</b> dan shalat <b>${avg(pc(d,"S"))}%</b>. Aspek yang paling perlu mendapat bimbingan adalah <b>${esc(NAMA[lemah.p].toLowerCase())}: ${esc(lemah.t)}</b> (hanya ${lemah.v}% siswa yang sudah baik). Aspek ini sebaiknya menjadi prioritas pembinaan.</div>`);
+  return html;
+}
+function renderGrafik(){ $("grafikOut").innerHTML=grafikHTML(); }
+function cetakGrafik(){
+  $("cert").innerHTML=`<div style="padding:6px 10px">
+    <div style="display:flex;align-items:center;gap:14px;border-bottom:3px solid #166534;padding-bottom:8px;margin-bottom:10px">
+      <img src="${LOGO}" style="width:64px;height:64px;object-fit:contain" alt="Logo">
+      <div style="flex:1;text-align:center">
+        <div style="font-size:17px;font-weight:bold;color:#166534">${CONFIG.sekolah}</div>
+        <div style="font-size:11px">${CONFIG.alamat}</div></div><div style="width:64px"></div></div>
+    <div style="text-align:center;font-size:15px;font-weight:bold;margin-bottom:8px">LAPORAN GRAFIK HASIL PENILAIAN PRAKTIK IBADAH &amp; WUDHU ISMUBA</div>
+    ${grafikHTML()}
+    <div style="font-size:11px;text-align:right;margin-top:8px">${CONFIG.kota}, ${fmtTgl(today())}<br>Dicetak oleh: ${esc(SESSION.name)}</div></div>`;
+  setTimeout(()=>window.print(),150);
+}
+initGrafikFilter();
 /* ============ LOGIN ============ */
 async function sha256(t){ const b=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(t)); return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,"0")).join(""); }
 async function doLogin(e){
