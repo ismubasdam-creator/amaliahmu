@@ -75,6 +75,8 @@
     <button id="tabN" onclick="showTab('n')">📝 Penilaian</button>
     <button id="tabR" onclick="showTab('r')">📊 Rekap Kelas</button>
     <button id="tabG" onclick="showTab('g')">📈 Grafik Laporan</button>
+        <button id="tabG" onclick="showTab('g')">📈 Grafik Laporan</button>
+    <button id="tabM" onclick="showTab('m')">🖨 Instrumen Manual</button>
     <button onclick="openGuide()" class="px-4 py-2 rounded-xl text-sm font-semibold bg-white border border-emerald-300 text-emerald-900">📖 Panduan Bacaan Tarjih</button>
   </div>
 
@@ -152,6 +154,40 @@
     </div>
   </section>
   <div id="grafikOut"></div>
+</div>
+  <div id="pageM" class="hidden">
+  <section class="bg-white rounded-2xl border border-emerald-100 p-5 mb-4">
+    <h2 class="font-bold text-emerald-900">Instrumen Penilaian Manual (Cetak Kertas)</h2>
+    <p class="text-xs text-emerald-800/70 mb-3">Pilih pengaturan lalu cetak. Cocok dipakai bila tidak ada HP/internet, atau banyak guru menilai bersamaan. Hasil kertas nanti dipindahkan ke aplikasi (lihat Panduan Penguji).</p>
+    <div class="grid sm:grid-cols-2 gap-3">
+      <label class="text-sm">Aspek yang dinilai
+        <select id="mJenis" class="mt-1 w-full rounded-lg border border-emerald-200 bg-emerald-50/50 px-3 py-2">
+          <option value="WS">Wudhu &amp; Shalat</option><option value="W">Wudhu saja</option><option value="S">Shalat saja</option>
+        </select></label>
+      <label class="text-sm">Kelas
+        <select id="mKelas" class="mt-1 w-full rounded-lg border border-emerald-200 bg-emerald-50/50 px-3 py-2"></select></label>
+      <label class="text-sm">Nomor absen (opsional, khusus formulir individu)
+        <input id="mAbsen" type="number" min="1" inputmode="numeric" placeholder="Kosong = semua siswa" class="mt-1 w-full rounded-lg border border-emerald-200 bg-emerald-50/50 px-3 py-2"></label>
+      <label class="text-sm">Jumlah baris/lembar bila kelas tidak dipilih
+        <input id="mBaris" type="number" min="1" max="60" value="30" class="mt-1 w-full rounded-lg border border-emerald-200 bg-emerald-50/50 px-3 py-2"></label>
+      <label class="text-sm sm:col-span-2">Tanggal penilaian (kosongkan agar ditulis tangan)
+        <input id="mTgl" type="date" class="mt-1 w-full rounded-lg border border-emerald-200 bg-emerald-50/50 px-3 py-2"></label>
+    </div>
+  </section>
+  <section class="grid sm:grid-cols-3 gap-3">
+    <div class="bg-white rounded-2xl border border-emerald-100 p-4">
+      <h3 class="font-bold text-emerald-900 text-sm">📘 Panduan Penguji</h3>
+      <p class="text-xs text-emerald-800/70 my-2">Langkah menilai, rubrik detail tiap aspek, tabel konversi nilai, dan cara input ke aplikasi. Bagikan ke semua guru.</p>
+      <button onclick="cetakManual('panduan')" class="w-full px-3 py-2 rounded-xl bg-emerald-700 text-white text-sm font-semibold">Cetak Panduan</button></div>
+    <div class="bg-white rounded-2xl border border-emerald-100 p-4">
+      <h3 class="font-bold text-emerald-900 text-sm">📋 Lembar Penilaian Kelas</h3>
+      <p class="text-xs text-emerald-800/70 my-2">Satu tabel untuk seluruh siswa satu kelas (A4 landscape). Nama terisi otomatis bila kelas dipilih.</p>
+      <button onclick="cetakManual('kelas')" class="w-full px-3 py-2 rounded-xl bg-amber-500 text-white text-sm font-semibold">Cetak Lembar Kelas</button></div>
+    <div class="bg-white rounded-2xl border border-emerald-100 p-4">
+      <h3 class="font-bold text-emerald-900 text-sm">📄 Formulir Individu</h3>
+      <p class="text-xs text-emerald-800/70 my-2">Satu lembar per siswa dengan kotak Baik/Kurang dan kolom catatan (A4 portrait).</p>
+      <button onclick="cetakManual('indiv')" class="w-full px-3 py-2 rounded-xl bg-amber-500 text-white text-sm font-semibold">Cetak Formulir</button></div>
+  </section>
 </div>
 </div>
 
