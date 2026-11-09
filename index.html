@@ -391,7 +391,7 @@ function valid(){
 
 /* ============ TAB, MODAL ============ */
 function showTab(t){
-  ["n","r","g"].forEach(x=>{
+  ["n","r","g","m"].forEach(x=>{
     $("page"+x.toUpperCase()).classList.toggle("hidden",t!==x);
     $("tab"+x.toUpperCase()).className=TAB+(t===x?ON:OFF);
   });
@@ -670,6 +670,209 @@ function cetakGrafik(){
   setTimeout(()=>window.print(),150);
 }
 initGrafikFilter();
+  /* ============ INSTRUMEN MANUAL (KERTAS) ============ */
+const RUB = {
+ W:[
+  ["Mengucapkan Bismillah dengan jelas sebelum mulai membasuh.","Tidak mengucapkan, lupa, atau baru mengucapkan setelah diingatkan guru."],
+  ["Kedua telapak tangan dibasuh (dianjurkan 3 kali) sampai bersih, sela-sela jari ikut dibersihkan.","Telapak tangan tidak dibasuh, atau sela jari terlewat."],
+  ["Berkumur dan menghirup air ke hidung (istinsyaq) lalu mengeluarkannya dengan benar.","Salah satu tidak dilakukan, atau air tidak sampai ke hidung."],
+  ["Seluruh muka dibasuh merata, dari tempat tumbuh rambut sampai bawah dagu dan telinga ke telinga.","Ada bagian muka yang tidak terkena air."],
+  ["Tangan kanan lalu kiri dibasuh dari ujung jari sampai melewati siku, merata.","Basuhan belum sampai siku atau tidak merata."],
+  ["Mengusap kepala dari depan ke belakang lalu kembali ke depan, kemudian mengusap telinga.","Usapan kepala tidak sesuai tuntunan, atau telinga tidak diusap."],
+  ["Kaki kanan lalu kiri dibasuh sampai melewati mata kaki, sela jari kaki dibersihkan.","Basuhan belum melewati mata kaki atau sela jari terlewat."],
+  ["Membaca doa setelah wudhu dengan lancar dan fasih (lihat Panduan Bacaan Tarjih di aplikasi).","Belum hafal, terbata-bata, atau salah lafal yang mengubah makna."],
+  ["Urutan wudhu benar dan tertib: muka, tangan, kepala, kaki.","Urutan tertukar atau ada tahap terlompati."]
+ ],
+ S:[
+  ["Niat dalam hati; takbiratul ihram dengan mengangkat tangan; lalu bersedekap dengan posisi tangan sesuai tuntunan.","Tidak mengangkat tangan saat takbir, atau posisi tangan bersedekap kurang tepat."],
+  ["Membaca doa iftitah dengan lancar dan fasih.","Belum hafal, terbata-bata, atau terlewat."],
+  ["Membaca Al-Fatihah dan surat pendek dengan makhraj dan tajwid yang benar, lancar.","Ada kesalahan makhraj/tajwid yang jelas, atau belum lancar."],
+  ["Ruku': punggung rata dengan kepala, tangan memegang lutut, tuma'ninah, bacaan ruku' lancar.","Punggung belum lurus, tidak tuma'ninah, atau bacaan kurang lancar."],
+  ["I'tidal: berdiri tegak, tuma'ninah, membaca bacaan i'tidal sampai selesai.","Tidak tegak, terburu-buru, atau bacaan terlewat."],
+  ["Sujud: dahi, hidung, telapak tangan, lutut, dan ujung kaki menyentuh lantai; tuma'ninah; bacaan lancar.","Ada anggota sujud yang belum menempel, tidak tuma'ninah, atau bacaan kurang."],
+  ["Duduk di antara dua sujud dengan posisi benar dan membaca doanya dengan lancar.","Posisi duduk atau bacaan belum tepat."],
+  ["Tasyahud awal/akhir dengan posisi duduk benar; tasyahud dan shalawat Nabi dibaca lancar.","Posisi duduk kurang tepat, atau bacaan belum hafal."],
+  ["Membaca doa sebelum salam dengan lancar.","Belum hafal, terbata-bata, atau terlewat."],
+  ["Salam dengan menoleh ke kanan lalu ke kiri secara sempurna.","Menoleh tidak sempurna atau salam tidak diucapkan."]
+ ]
+};
+const BOX='<span style="display:inline-block;width:11px;height:11px;border:1.3px solid #222;vertical-align:middle"></span>';
+const LN = w => `<span style="display:inline-block;border-bottom:1px dotted #222;width:${w}mm">&nbsp;</span>`;
+const mParts = j => j==="WS" ? ["W","S"] : [j];
+const mRoster = k => (window.SISWA||{})[k] || [];
+
+function initManual(){
+  $("mKelas").innerHTML='<option value="">— Kosongkan (nama ditulis tangan) —</option>'+kelasList().map(k=>`<option>${k}</option>`).join("");
+}
+function mOpt(){
+  return {jenis:$("mJenis").value, kelas:$("mKelas").value, absen:+$("mAbsen").value||0,
+          baris:Math.max(1,Math.min(60,+$("mBaris").value||30)), tgl:$("mTgl").value};
+}
+function mHead(judul,sub,kecil){
+  const s=kecil?50:58;
+  return `<div style="display:flex;align-items:center;gap:12px;border-bottom:3px solid #166534;padding-bottom:6px;margin-bottom:8px">
+    <img src="${LOGO}" style="width:${s}px;height:${s}px;object-fit:contain" alt="">
+    <div style="flex:1;text-align:center"><div style="font-size:15px;font-weight:bold;color:#166534">${CONFIG.sekolah}</div><div style="font-size:10px">${CONFIG.alamat}</div></div>
+    <div style="width:${s}px"></div></div>
+    <div style="text-align:center;margin-bottom:8px"><div style="font-size:14px;font-weight:bold">${judul}</div>${sub?`<div style="font-size:10.5px">${sub}</div>`:""}</div>`;
+}
+/* ringkasan konversi jumlah aspek kurang -> predikat (dihitung otomatis dari rumus aplikasi) */
+function konvRingkas(ps){
+  const t=ps.reduce((a,p)=>a+DATA[p].length,0), g=[];
+  for(let k=0;k<=t;k++){
+    const pr=pred(Math.round((t-k)/t*100)), l=g[g.length-1];
+    if(l&&l.pr===pr) l.e=k; else g.push({pr,s:k,e:k});
+  }
+  return g.map(x=>`kurang ${x.s===x.e?x.s:x.s+"–"+x.e} = <b>${x.pr}</b>`).join(" &nbsp;|&nbsp; ");
+}
+function konvBlok(ps){
+  let h=ps.map(p=>`<div><b>${NAMA[p]}</b> (${DATA[p].length} aspek): ${konvRingkas([p])}</div>`).join("");
+  if(ps.length===2) h+=`<div><b>Gabungan Wudhu + Shalat</b> (${DATA.W.length+DATA.S.length} aspek, jumlahkan kurang W dan S): ${konvRingkas(ps)}</div>`;
+  return h;
+}
+function cetakKertas(html,landscape){
+  let st=$("pgStyle");
+  if(!st){ st=document.createElement("style"); st.id="pgStyle"; document.head.appendChild(st); }
+  st.textContent=`@media print{@page{size:A4 ${landscape?"landscape":"portrait"};margin:${landscape?"8mm":"10mm"}}}`;
+  $("cert").innerHTML=html; setTimeout(()=>window.print(),150);
+}
+addEventListener("afterprint",()=>{ const s=$("pgStyle"); if(s) s.textContent=""; });
+
+/* ---------- 1. LEMBAR PENILAIAN KELAS (landscape) ---------- */
+function mKelasHTML(o){
+  const ps=mParts(o.jenis), ros=mRoster(o.kelas), n=ros.length?ros.length:o.baris;
+  const bd="border:1px solid #333;", GC={W:"#d6ebf7",S:"#dcefe2"};
+  const th=`${bd}padding:2px;font-size:9px;text-align:center`;
+  const tdc=`${bd}height:6.4mm;padding:0 3px;font-size:10px`;
+  const cols=[]; ps.forEach(p=>DATA[p].forEach((_,i)=>cols.push([p,p+(i+1)])));
+  const colgroup='<col style="width:7mm"><col style="width:46mm">'+cols.map(()=>'<col style="width:6.5mm">').join("")
+    +ps.map(()=>'<col style="width:9mm">').join("")+'<col style="width:21mm"><col>';
+  const head=`<thead>
+    <tr><th rowspan="2" style="${th};background:#eee">No</th><th rowspan="2" style="${th};background:#eee">Nama Siswa</th>
+      ${ps.map(p=>`<th colspan="${DATA[p].length}" style="${th};background:${GC[p]}">${NAMA[p].toUpperCase()}</th>`).join("")}
+      ${ps.map(p=>`<th rowspan="2" style="${th};background:#fff4d6">Kurang<br>${p}</th>`).join("")}
+      <th rowspan="2" style="${th};background:#eee">Predikat<br>Akhir</th><th rowspan="2" style="${th};background:#eee">Catatan</th></tr>
+    <tr>${cols.map(c=>`<th style="${th};background:${GC[c[0]]}">${c[1]}</th>`).join("")}</tr></thead>`;
+  let rows="";
+  for(let i=0;i<n;i++){
+    rows+=`<tr style="break-inside:avoid"><td style="${tdc};text-align:center">${i+1}</td><td style="${tdc}">${esc(ros[i]||"")}</td>
+      ${cols.map(()=>`<td style="${tdc}"></td>`).join("")}${ps.map(()=>`<td style="${tdc}"></td>`).join("")}<td style="${tdc}"></td><td style="${tdc}"></td></tr>`;
+  }
+  const legend=`<div style="display:grid;grid-template-columns:${ps.map(()=>"1fr").join(" ")};gap:10px;margin:6px 0">`+
+    ps.map(p=>`<div style="border:1px solid #bbb;border-radius:4px;padding:4px 6px"><div style="font-weight:bold;font-size:10px">${NAMA[p]}</div>
+      <div style="column-count:${ps.length===1?3:2};column-gap:8px;font-size:8.5px;line-height:1.3">${DATA[p].map((x,i)=>`<div style="break-inside:avoid"><b>${p}${i+1}</b> ${cap(x[1])}</div>`).join("")}</div></div>`).join("")+`</div>`;
+  return `<div>${mHead("LEMBAR PENILAIAN PRAKTIK IBADAH - REKAP KELAS","Wudhu dan Shalat Menurut Tuntunan Tarjih Muhammadiyah - ISMUBA",true)}
+    <div style="font-size:11px;margin-bottom:4px">Kelas: <b>${esc(o.kelas)||LN(35)}</b> &nbsp;&nbsp; Tanggal: ${o.tgl?fmtTgl(o.tgl):LN(35)} &nbsp;&nbsp; Penguji: ${LN(70)}</div>
+    <div style="font-size:10.5px;background:#fff7e0;border:1px solid #e5c76b;padding:3px 6px;border-radius:4px"><b>Cara mengisi:</b> beri tanda <b>✗</b> pada kotak aspek yang <b>KURANG</b>. Kotak dikosongkan berarti <b>BAIK</b>. Hitung jumlah ✗ pada kolom "Kurang", lalu lihat predikat pada tabel di bawah.</div>
+    ${legend}
+    <table style="width:100%;border-collapse:collapse;table-layout:fixed">${colgroup}${head}<tbody>${rows}</tbody></table>
+    <div style="font-size:9.5px;line-height:1.5;margin-top:6px;border:1px solid #bbb;padding:4px 6px"><b>Tabel konversi predikat:</b>${konvBlok(ps)}</div>
+    <div style="font-size:10px;margin-top:4px">Catatan: setelah dinilai, lembar ini dipindahkan ke aplikasi AmaliahMu (menu Penilaian) menggunakan <b>kelas + nomor absen</b>.</div>
+    </div>`;
+}
+
+/* ---------- 2. FORMULIR INDIVIDU (portrait) ---------- */
+function mIndivHTML(o){
+  const ps=mParts(o.jenis), ros=mRoster(o.kelas);
+  let list;
+  if(ros.length){ list=ros.map((nm,i)=>({nm,ab:i+1})); if(o.absen>0) list=list.filter(x=>x.ab===o.absen); }
+  else list=Array.from({length:o.baris},()=>({nm:"",ab:o.absen||""}));
+  if(!list.length) return "";
+  const bd="border:1px solid #333;padding:2px 5px;";
+  const part=p=>`<div style="font-weight:bold;font-size:12px;margin:8px 0 3px">${p==="W"?"A":"B"}. ${NAMA[p]}</div>
+    <table style="width:100%;border-collapse:collapse;font-size:10.5px"><thead><tr style="background:#dcefe2">
+      <th style="${bd}width:9mm">Kode</th><th style="${bd}">Aspek yang dinilai</th><th style="${bd}width:14mm">Baik</th><th style="${bd}width:14mm">Kurang</th></tr></thead>
+      <tbody>${DATA[p].map((x,i)=>`<tr><td style="${bd}text-align:center">${p}${i+1}</td><td style="${bd}">${cap(x[1])}</td><td style="${bd}text-align:center">${BOX}</td><td style="${bd}text-align:center">${BOX}</td></tr>`).join("")}</tbody></table>
+    <div style="font-size:10.5px;margin-top:4px">Jumlah aspek kurang: ${LN(10)} dari ${DATA[p].length} &nbsp; Capaian: ${LN(10)} % &nbsp; Predikat: ${BOX} Sangat Menguasai ${BOX} Menguasai ${BOX} Cukup ${BOX} Perlu Bimbingan</div>`;
+  return list.map((s,i)=>`<div style="${i?"page-break-before:always;":""}border:2px solid #166534;padding:10px 14px">
+    ${mHead("FORMULIR PENILAIAN PRAKTIK IBADAH (INDIVIDU)","Wudhu dan Shalat Menurut Tuntunan Tarjih Muhammadiyah - ISMUBA",true)}
+    <table style="font-size:11.5px;margin-bottom:2px"><tbody>
+      <tr><td style="padding:1px 10px 1px 0">Nama Siswa</td><td>: ${s.nm?`<b>${esc(s.nm)}</b>`:LN(80)}</td></tr>
+      <tr><td style="padding:1px 10px 1px 0">Kelas / No. Absen</td><td>: ${o.kelas?esc(o.kelas):LN(30)} / ${s.ab?s.ab:LN(12)}</td></tr>
+      <tr><td style="padding:1px 10px 1px 0">Tanggal / Penguji</td><td>: ${o.tgl?fmtTgl(o.tgl):LN(30)} / ${LN(70)}</td></tr></tbody></table>
+    <div style="font-size:10px;margin:3px 0">Centang <b>Kurang</b> hanya pada aspek yang belum tepat; selain itu centang <b>Baik</b>.</div>
+    ${ps.map(part).join("")}
+    <div style="margin-top:6px;font-size:10.5px"><b>Catatan penguji:</b><br>${LN(175)}<br><br>${LN(175)}</div>
+    <div style="font-size:9px;margin-top:5px;color:#444"><b>Konversi:</b>${konvBlok(ps)}</div>
+    <div style="text-align:right;font-size:11px;margin-top:6px">${CONFIG.kota}, ${o.tgl?fmtTgl(o.tgl):LN(35)}<br>Penguji,<br><br><br>${LN(55)}</div>
+  </div>`).join("");
+}
+
+/* ---------- 3. PANDUAN PENGUJI ---------- */
+function mPanduanHTML(o){
+  const ps=mParts(o.jenis), bd="border:1px solid #444;padding:3px 6px;vertical-align:top;";
+  const H=t=>`<div style="font-weight:bold;font-size:12.5px;color:#166534;margin:10px 0 3px">${t}</div>`;
+  const P="font-size:11px;line-height:1.55;text-align:justify;margin:0 0 3px";
+  const LI="font-size:11px;line-height:1.55;margin-bottom:2px";
+  const rub=ps.map(p=>`<div style="font-weight:bold;font-size:12px;margin:8px 0 3px">${NAMA[p]}</div>
+    <table style="width:100%;border-collapse:collapse;font-size:10.5px"><thead><tr style="background:#dcefe2">
+    <th style="${bd}width:9mm">Kode</th><th style="${bd}width:36mm">Aspek</th><th style="${bd}">Tandai BAIK jika…</th><th style="${bd}">Tandai KURANG jika…</th></tr></thead><tbody>
+    ${DATA[p].map((x,i)=>`<tr style="break-inside:avoid"><td style="${bd}text-align:center"><b>${p}${i+1}</b></td><td style="${bd}">${cap(x[1])}</td><td style="${bd}">${RUB[p][i][0]}</td><td style="${bd}">${RUB[p][i][1]}</td></tr>`).join("")}</tbody></table>`).join("");
+  return `<div>
+  ${mHead("PANDUAN PENGUJI - PENILAIAN PRAKTIK IBADAH MANUAL (KERTAS)","Aplikasi AmaliahMu - ISMUBA",true)}
+  ${H("1. Tujuan")}
+  <p style="${P}">Instrumen kertas dipakai bila HP/internet tidak tersedia, bila banyak guru menilai bersamaan, atau bila sekolah memerlukan arsip fisik. Hasil kertas <b>tetap dipindahkan ke aplikasi</b> agar masuk ke rekap kelas, grafik laporan, dan Lembar Hasil Evaluasi siswa.</p>
+  ${H("2. Prinsip penilaian")}
+  <ol style="margin:0 0 0 18px;padding:0">
+   <li style="${LI}">Semua aspek dianggap <b>BAIK</b> sejak awal. Guru hanya menandai <b>✗ (kurang)</b> pada aspek yang belum tepat.</li>
+   <li style="${LI}">Guru wudhu dan guru shalat boleh orang yang berbeda. Hasil keduanya digabung otomatis oleh aplikasi berdasarkan <b>kelas + nomor absen</b>, sehingga nomor absen harus sama persis dengan daftar siswa.</li>
+   <li style="${LI}">Nilai dihitung dari persentase aspek yang baik. Predikat: Sangat Menguasai ≥ 90%, Menguasai 75–89%, Cukup 60–74%, Perlu Bimbingan &lt; 60%.</li>
+  </ol>
+  ${H("3. Persiapan")}
+  <ol style="margin:0 0 0 18px;padding:0">
+   <li style="${LI}">Cetak Lembar Penilaian Kelas (satu per kelas per guru) dan Panduan ini. Siapkan pena atau pensil.</li>
+   <li style="${LI}">Siapkan tempat wudhu (air dan keran berfungsi) serta area shalat yang bersih dengan sajadah.</li>
+   <li style="${LI}">Bagi tugas: guru penguji wudhu dan guru penguji shalat. Tentukan urutan siswa menurut nomor absen, kelompok 3–5 anak.</li>
+   <li style="${LI}">Tulis kelas, tanggal, dan nama penguji di bagian atas lembar sebelum mulai.</li>
+  </ol>
+  ${H("4. Langkah menilai")}
+  <ol style="margin:0 0 0 18px;padding:0">
+   <li style="${LI}">Panggil siswa sesuai nomor absen. Sapa dengan ramah dan jelaskan bahwa ini latihan untuk membantu ananda, bukan ujian yang menakutkan.</li>
+   <li style="${LI}"><b>Wudhu:</b> siswa berwudhu lengkap. Amati tanpa menyela, lalu beri tanda ✗ pada kotak W1–W9 yang kurang. Doa setelah wudhu dinilai dengan meminta siswa membacanya.</li>
+   <li style="${LI}"><b>Shalat:</b> siswa melakukan shalat lengkap sampai salam (jumlah rakaat sesuai kesepakatan tim ISMUBA sekolah). Beri tanda ✗ pada S1–S10 yang kurang.</li>
+   <li style="${LI}">Bila ragu, minta siswa mengulang bagian itu satu kali sebelum memutuskan.</li>
+   <li style="${LI}">Hitung jumlah ✗ pada kolom "Kurang", lalu tentukan predikat dengan tabel konversi di bawah. Tulis catatan singkat bila perlu.</li>
+  </ol>
+  <div style="page-break-before:always"></div>
+  ${H("5. Rubrik detail tiap aspek")}
+  <p style="${P}">Rubrik ini ringkasan agar penilaian antar guru seragam. Sesuaikan dengan Himpunan Putusan Tarjih (HPT) dan kesepakatan tim ISMUBA sekolah bila ada perbedaan rincian.</p>
+  ${rub}
+  <div style="page-break-before:always"></div>
+  ${H("6. Tabel konversi: jumlah aspek kurang → predikat")}
+  <div style="font-size:11px;line-height:1.7;border:1px solid #bbb;padding:5px 8px">${konvBlok(ps)}</div>
+  <p style="${P};margin-top:4px">Rumus: capaian % = (jumlah aspek − aspek kurang) ÷ jumlah aspek × 100, dibulatkan. Tabel di atas sudah mengikuti rumus yang sama dengan aplikasi.</p>
+  ${H("7. Memindahkan hasil kertas ke aplikasi")}
+  <ol style="margin:0 0 0 18px;padding:0">
+   <li style="${LI}">Buka AmaliahMu, masuk dengan nama lengkap dan kata sandi guru penguji.</li>
+   <li style="${LI}">Menu <b>📝 Penilaian</b>: pilih <b>Yang Anda Nilai</b> (Wudhu saja / Shalat saja / keduanya) sesuai tugas Anda.</li>
+   <li style="${LI}">Pilih <b>Kelas</b> lalu pilih nama siswa (atau isi nomor absen). Atur tanggal evaluasi sesuai tanggal di lembar kertas.</li>
+   <li style="${LI}">Ketuk hanya kotak aspek yang bertanda ✗ di kertas. Kotak berubah oranye "Perlu evaluasi".</li>
+   <li style="${LI}">Periksa persentase dan predikat di layar, harus sama dengan hitungan di kertas. Bila beda, periksa kembali ketukan Anda.</li>
+   <li style="${LI}">Tekan <b>💾 Simpan Penilaian</b>, lalu <b>↺ Siswa Berikutnya</b> (nomor absen otomatis maju satu).</li>
+   <li style="${LI}">Bila internet putus, data tersimpan di perangkat dan terkirim otomatis saat online. Tekan <b>🔄 Segarkan</b> untuk memeriksa.</li>
+   <li style="${LI}">Simpan lembar kertas sebagai arsip sampai rekap semester disahkan.</li>
+  </ol>
+  ${H("8. Etika dan tips")}
+  <ul style="margin:0 0 0 18px;padding:0">
+   <li style="${LI}">Nilai di tempat yang tidak mempermalukan siswa; jangan menyebut nilai di depan teman-temannya.</li>
+   <li style="${LI}">Beri umpan balik positif dahulu, lalu sampaikan bagian yang perlu dilatih.</li>
+   <li style="${LI}">Siswa dengan predikat Perlu Bimbingan sebaiknya dijadwalkan latihan ulang dan didampingi orang tua di rumah.</li>
+   <li style="${LI}">Tulis dengan jelas; satu lembar satu kelas agar tidak tertukar saat input.</li>
+  </ul>
+  <div style="font-size:10px;margin-top:10px;text-align:right">${CONFIG.sekolah}</div></div>`;
+}
+
+function cetakManual(t){
+  const o=mOpt();
+  if(t==="panduan") return cetakKertas(mPanduanHTML(o),false);
+  if(t==="kelas")   return cetakKertas(mKelasHTML(o),true);
+  if(t==="indiv"){
+    const h=mIndivHTML(o);
+    if(!h) return toast("Nomor absen tidak ditemukan di daftar kelas ini");
+    return cetakKertas(h,false);
+  }
+}
+initManual();
 /* ============ LOGIN ============ */
 async function sha256(t){ const b=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(t)); return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,"0")).join(""); }
 async function doLogin(e){
