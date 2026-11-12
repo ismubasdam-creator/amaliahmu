@@ -76,6 +76,7 @@
   </div>
   <div class="flex flex-wrap gap-2 mb-5">
     <button id="tabN" onclick="showTab('n')">📝 Penilaian</button>
+    <button id="tabB" onclick="showTab('b')">👥 Rombongan</button>
     <button id="tabR" onclick="showTab('r')">📊 Rekap Kelas</button>
     <button id="tabG" onclick="showTab('g')">📈 Grafik Laporan</button>
         <button id="tabG" onclick="showTab('g')">📈 Grafik Laporan</button>
@@ -158,6 +159,35 @@
   </section>
   <div id="grafikOut"></div>
 </div>
+  <div id="pageB" class="hidden">
+  <section class="bg-white rounded-2xl border border-emerald-100 p-5 mb-4">
+    <h2 class="font-bold text-emerald-900">Penilaian Rombongan</h2>
+    <p class="text-xs text-emerald-800/70 mb-3">Pilih kelas, lalu ketuk kotak pada aspek yang <b>KURANG</b> (kosong = baik). Hanya siswa yang dicentang <b>Ikut</b> yang disimpan. Hasil otomatis digabung dengan penilaian guru lain berdasarkan kelas + nomor absen.</p>
+    <div class="grid sm:grid-cols-2 gap-3">
+      <label class="text-sm">Kelas
+        <select id="bKelas" onchange="bRender()" class="mt-1 w-full rounded-lg border border-emerald-200 bg-emerald-50/50 px-3 py-2"></select></label>
+      <label class="text-sm">Aspek yang dinilai
+        <select id="bJenis" onchange="bRender()" class="mt-1 w-full rounded-lg border border-emerald-200 bg-emerald-50/50 px-3 py-2">
+          <option value="WS">Wudhu &amp; Shalat</option><option value="W">Wudhu saja</option><option value="S">Shalat saja</option></select></label>
+      <label class="text-sm">Tanggal evaluasi
+        <input id="bTgl" type="date" class="mt-1 w-full rounded-lg border border-emerald-200 bg-emerald-50/50 px-3 py-2"></label>
+      <label class="text-sm">Simbol tanda "kurang"
+        <select id="bSim" onchange="bRender()" class="mt-1 w-full rounded-lg border border-emerald-200 bg-emerald-50/50 px-3 py-2">
+          <option value="✗">✗ (silang)</option><option value="●">● (bulat)</option></select></label>
+      <label class="text-sm">Tampilkan dari absen
+        <input id="bDari" type="number" min="1" inputmode="numeric" placeholder="1" onchange="bRender()" class="mt-1 w-full rounded-lg border border-emerald-200 bg-emerald-50/50 px-3 py-2"></label>
+      <label class="text-sm">Sampai absen
+        <input id="bSampai" type="number" min="1" inputmode="numeric" placeholder="semua" onchange="bRender()" class="mt-1 w-full rounded-lg border border-emerald-200 bg-emerald-50/50 px-3 py-2"></label>
+    </div>
+    <div class="flex flex-wrap gap-2 mt-3">
+      <button onclick="bPilihSemua(true)" class="px-3 py-1.5 rounded-lg border border-emerald-300 text-emerald-900 text-xs font-semibold">☑ Centang semua Ikut</button>
+      <button onclick="bPilihSemua(false)" class="px-3 py-1.5 rounded-lg border border-emerald-300 text-emerald-900 text-xs font-semibold">☐ Kosongkan Ikut</button>
+      <button onclick="bReload()" class="px-3 py-1.5 rounded-lg border border-orange-300 text-orange-700 text-xs font-semibold">↺ Muat ulang kelas ini</button>
+    </div>
+  </section>
+  <div id="bLegend"></div>
+  <div class="bg-white rounded-2xl border border-emerald-100 overflow-auto" style="max-height:70vh"><table id="bTabel" class="text-sm border-separate" style="border-spacing:0"></table></div>
+</div>
   <div id="pageM" class="hidden">
   <section class="bg-white rounded-2xl border border-emerald-100 p-5 mb-4">
     <h2 class="font-bold text-emerald-900">Instrumen Penilaian Manual (Cetak Kertas)</h2>
@@ -202,7 +232,13 @@
   </div>
 </div>
 
-<div id="toast" class="fixed top-4 left-1/2 -translate-x-1/2 max-w-[90vw] bg-emerald-800 text-white text-sm px-4 py-2 rounded-xl shadow-lg hidden z-50"></div>
+  <div id="barB" class="hidden fixed bottom-0 inset-x-0 bg-white/95 backdrop-blur border-t border-emerald-200 p-3">
+  <div class="max-w-4xl mx-auto flex flex-wrap items-center gap-3 justify-center">
+    <span id="bInfo" class="text-sm text-emerald-900"></span>
+    <button onclick="bSimpan()" class="px-4 py-2 rounded-xl bg-emerald-700 text-white text-sm font-semibold hover:bg-emerald-800">💾 Simpan Rombongan</button>
+  </div>
+</div>
+  <div id="toast" class="fixed top-4 left-1/2 -translate-x-1/2 max-w-[90vw] bg-emerald-800 text-white text-sm px-4 py-2 rounded-xl shadow-lg hidden z-50"></div>
 
 <div id="modal" class="fixed inset-0 z-40 hidden bg-emerald-950/50 p-3 sm:p-8 overflow-y-auto">
   <div class="max-w-3xl mx-auto bg-white rounded-2xl shadow-xl">
