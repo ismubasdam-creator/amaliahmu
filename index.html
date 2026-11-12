@@ -23,11 +23,14 @@
   .item.bad .st{background:#f97316;color:#fff}
   .item.bad .st:before{content:"⚠ Perlu evaluasi"}
   .item .st:before{content:"✓ Baik"}
+  .bc{width:34px;height:34px;border:1px solid #bfe3cd;border-radius:6px;background:#f3faf5;font-weight:800;color:#c2410c;line-height:1;font-size:16px}
+  .bc.on{background:#ffe4d6;border-color:#f97316}
+  .bc:active{transform:scale(.92)}
   #cert{display:none;background:#fff;color:#111;font-family:Georgia,'Times New Roman',serif}
   @media print{
     @page{size:A4;margin:10mm}
     body{background:#fff}
-    #app,#modal,#toast,#login,#bar{display:none!important}
+    #app,#modal,#toast,#login,#bar,#barB{display:none!important}
     #cert{display:block!important}
     *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
   }
