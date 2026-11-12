@@ -921,6 +921,10 @@ const bParts = () => $("bJenis").value === "WS" ? ["W","S"] : [$("bJenis").value
 const bSimbol = () => $("bSim").value;
 const bRos = k => (window.SISWA || {})[k] || [];
 const BST = (l,t,z,bg) => `position:sticky;${l!==null?`left:${l}px;`:""}${t!==null?`top:${t}px;`:""}z-index:${z};background:${bg}`;
+  const BSHORT = {
+  W:["Basmalah","Telapak tangan & sela jari","Berkumur & istinsyaq","Membasuh muka","Tangan sampai siku","Kepala & telinga","Kaki sampai mata kaki","Doa setelah wudhu","Urutan wudhu"],
+  S:["Niat dalam hati & takbiratul ihram","Doa iftitah","Al-Fatihah & surat","Ruku'","I'tidal","Sujud","Duduk antara 2 sujud","Tasyahud & shalawat","Doa sebelum salam","Salam"]
+};
 
 function bInit(){
   if(!bInited){
@@ -996,7 +1000,7 @@ function bRender(){
     ${ps.map(p => `<th rowspan="2" ${th} style="${BST(null,0,4,"#fff4d6")};min-width:52px">Kurang ${p}</th>`).join("")}
     <th rowspan="2" ${th} style="${BST(null,0,4,"#d1fae5")};min-width:120px">Predikat</th>
     <th rowspan="2" ${th} style="${BST(null,0,4,"#d1fae5")};min-width:70px">Status</th></tr>`;
-  const h2 = `<tr>${ps.map(p => DATA[p].map((x,i) => `<th ${th} title="${esc(cap(x[1]))}" style="${BST(null,30,4,GCOL[p])};height:28px;min-width:38px">${p}${i+1}</th>`).join("")).join("")}</tr>`;
+  const h2 = `<tr>${ps.map(p => DATA[p].map((x,i) => `<th ${th} title="${esc(cap(x[1]))}" style="${BST(null,30,4,GCOL[p])};height:150px;min-width:38px;padding:4px 0;vertical-align:bottom"><div style="writing-mode:vertical-rl;transform:rotate(180deg);white-space:nowrap;margin:0 auto;font-size:11px;font-weight:600;line-height:1.1">${i+1}. ${esc(BSHORT[p][i])}</div></th>`).join("")).join("")}</tr>`;
 
   /* baris siswa */
   let rows = "";
