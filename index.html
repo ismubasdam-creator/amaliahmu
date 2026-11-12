@@ -430,13 +430,15 @@ function valid(){
 
 /* ============ TAB, MODAL ============ */
 function showTab(t){
-  ["n","r","g","m"].forEach(x=>{
+  ["n","r","g","m","b"].forEach(x=>{
     $("page"+x.toUpperCase()).classList.toggle("hidden",t!==x);
     $("tab"+x.toUpperCase()).className=TAB+(t===x?ON:OFF);
   });
   $("bar").classList.toggle("hidden",t!=="n");
+  $("barB").classList.toggle("hidden",t!=="b");
   if(t==="r"){ renderRekap(); syncAll(); }
   if(t==="g"){ renderGrafik(); syncAll(); }
+  if(t==="b"){ bInit(); syncAll(); }
   window.scrollTo(0,0);
 }
 function openGuide(){
@@ -912,7 +914,165 @@ function cetakManual(t){
   }
 }
 initManual();
-/* ============ LOGIN ============ */
+/* ============ ROMBONGAN (SATU KELAS SEKALIGUS) ============ */
+const BS = {};   // BS[kelas][absen] = {W:Set, S:Set, ikut:boolean}
+let bInited = false;
+const bParts = () => $("bJenis").value === "WS" ? ["W","S"] : [$("bJenis").value];
+const bSimbol = () => $("bSim").value;
+const bRos = k => (window.SISWA || {})[k] || [];
+const BST = (l,t,z,bg) => `position:sticky;${l!==null?`left:${l}px;`:""}${t!==null?`top:${t}px;`:""}z-index:${z};background:${bg}`;
+
+function bInit(){
+  if(!bInited){
+    $("bKelas").innerHTML = '<option value="">— Pilih kelas —</option>' + kelasList().map(k=>`<option>${k}</option>`).join("");
+    $("bTgl").value = today();
+    $("bJenis").value = mode;
+    bInited = true;
+  }
+  bRender();
+}
+
+/* siapkan data kelas; isi otomatis dari database bila sudah pernah dinilai */
+function bMuat(k, paksa){
+  if(BS[k] && !paksa) return;
+  BS[k] = {};
+  bRos(k).forEach((nm, i) => {
+    const a = i + 1, r = DB.find(x => x.key === k + "|" + a);
+    BS[k][a] = {W:new Set(r && r.W ? r.W.kode : []), S:new Set(r && r.S ? r.S.kode : []), ikut:false};
+  });
+}
+function bReload(){
+  const k = $("bKelas").value; if(!k) return;
+  if(!confirm("Muat ulang data kelas ini dari database? Tanda yang belum disimpan akan hilang.")) return;
+  bMuat(k, true); bRender();
+}
+function bPilihSemua(v){
+  const k = $("bKelas").value; if(!k || !BS[k]) return;
+  const dari = +$("bDari").value || 1, sampai = +$("bSampai").value || 9999;
+  Object.entries(BS[k]).forEach(([a, s]) => { if(+a >= dari && +a <= sampai) s.ikut = v; });
+  bRender();
+}
+
+function bPredHTML(s){
+  if(!s.ikut) return '<span class="text-xs text-emerald-800/50">—</span>';
+  const ps = bParts(), t = ps.reduce((n,p)=>n+DATA[p].length,0), kk = ps.reduce((n,p)=>n+s[p].size,0);
+  const persen = Math.round((t-kk)/t*100), pr = pred(persen);
+  return `<span class="px-2 py-0.5 rounded-full text-[11px] font-bold whitespace-nowrap ${PC[pr]}">${persen}% ${pr}</span>`;
+}
+function bRefreshRow(a){
+  const k = $("bKelas").value, s = BS[k] && BS[k][a]; if(!s) return;
+  bParts().forEach(p => { const c = $(`bkw-${p}-${a}`); if(c) c.textContent = s[p].size; });
+  const c = $("bpr-" + a); if(c) c.innerHTML = bPredHTML(s);
+  bHitung();
+}
+function bHitung(){
+  const k = $("bKelas").value;
+  const n = k && BS[k] ? Object.values(BS[k]).filter(s => s.ikut).length : 0;
+  $("bInfo").textContent = n + " siswa akan disimpan";
+}
+
+function bRender(){
+  const k = $("bKelas").value, el = $("bTabel");
+  $("bLegend").innerHTML = "";
+  if(!k){ el.innerHTML = '<tbody><tr><td class="p-4 text-sm text-emerald-800">Pilih kelas terlebih dahulu.</td></tr></tbody>'; bHitung(); return; }
+  const ros = bRos(k);
+  if(!ros.length){ el.innerHTML = '<tbody><tr><td class="p-4 text-sm text-emerald-800">Daftar siswa kelas ini belum ada di siswa.js.</td></tr></tbody>'; bHitung(); return; }
+  bMuat(k);
+  const ps = bParts(), dari = +$("bDari").value || 1, sampai = +$("bSampai").value || 9999;
+  const GCOL = {W:"#d6ebf7", S:"#dcefe2"};
+  const th = 'class="border border-emerald-200 text-xs text-center"';
+
+  /* keterangan kode aspek */
+  $("bLegend").innerHTML = `<details class="bg-white rounded-xl border border-emerald-100 px-4 py-2 mb-3 text-xs">
+    <summary class="font-semibold text-emerald-900 cursor-pointer">Arti kode aspek (ketuk untuk melihat)</summary>
+    <div class="grid sm:grid-cols-2 gap-3 mt-2">${ps.map(p => `<div><b>${NAMA[p]}</b>${DATA[p].map((x,i)=>`<div><b>${p}${i+1}</b> ${cap(x[1])}</div>`).join("")}</div>`).join("")}</div></details>`;
+
+  /* header */
+  const h1 = `<tr>
+    <th rowspan="2" ${th} style="${BST(0,0,6,"#d1fae5")};width:44px;height:30px">Ikut</th>
+    <th rowspan="2" ${th} style="${BST(44,0,6,"#d1fae5")};width:34px">No</th>
+    <th rowspan="2" ${th} style="${BST(78,0,6,"#d1fae5")};min-width:140px">Nama Siswa</th>
+    ${ps.map(p => `<th colspan="${DATA[p].length}" ${th} style="${BST(null,0,4,GCOL[p])};height:30px">${NAMA[p].toUpperCase()}</th>`).join("")}
+    ${ps.map(p => `<th rowspan="2" ${th} style="${BST(null,0,4,"#fff4d6")};min-width:52px">Kurang ${p}</th>`).join("")}
+    <th rowspan="2" ${th} style="${BST(null,0,4,"#d1fae5")};min-width:120px">Predikat</th>
+    <th rowspan="2" ${th} style="${BST(null,0,4,"#d1fae5")};min-width:70px">Status</th></tr>`;
+  const h2 = `<tr>${ps.map(p => DATA[p].map((x,i) => `<th ${th} title="${esc(cap(x[1]))}" style="${BST(null,30,4,GCOL[p])};height:28px;min-width:38px">${p}${i+1}</th>`).join("")).join("")}</tr>`;
+
+  /* baris siswa */
+  let rows = "";
+  ros.forEach((nm, i) => {
+    const a = i + 1; if(a < dari || a > sampai) return;
+    const s = BS[k][a], r = DB.find(x => x.key === k + "|" + a);
+    const td = 'class="border border-emerald-100 text-center" style="padding:2px"';
+    rows += `<tr>
+      <td style="${BST(0,null,2,"#fff")};text-align:center" class="border border-emerald-100"><input type="checkbox" data-ik="${a}" ${s.ikut?"checked":""} style="width:20px;height:20px"></td>
+      <td style="${BST(44,null,2,"#fff")};text-align:center" class="border border-emerald-100 text-xs">${a}</td>
+      <td style="${BST(78,null,2,"#fff")};min-width:140px;max-width:140px;font-size:12px;padding:2px 6px" class="border border-emerald-100">${esc(nm)}</td>
+      ${ps.map(p => DATA[p].map((_, j) => `<td ${td}><button type="button" class="bc ${s[p].has(j)?"on":""}" data-a="${a}" data-p="${p}" data-i="${j}">${s[p].has(j)?bSimbol():""}</button></td>`).join("")).join("")}
+      ${ps.map(p => `<td id="bkw-${p}-${a}" ${td}>${s[p].size}</td>`).join("")}
+      <td id="bpr-${a}" ${td}>${bPredHTML(s)}</td>
+      <td ${td} class="border border-emerald-100 text-center text-[11px]" title="${esc(ps.map(p => r && r[p] ? NAMA[p]+": "+r[p].penguji : NAMA[p]+": belum").join(" | "))}">${ps.map(p => p + (r && r[p] ? "✓" : "–")).join(" ")}</td>
+    </tr>`;
+  });
+  el.innerHTML = `<thead>${h1}${h2}</thead><tbody>${rows}</tbody>`;
+  bHitung();
+}
+
+/* ketuk kotak aspek = tandai kurang; ketuk lagi = batal */
+$("bTabel").addEventListener("click", e => {
+  const b = e.target.closest(".bc"); if(!b) return;
+  const k = $("bKelas").value, a = +b.dataset.a, p = b.dataset.p, i = +b.dataset.i, s = BS[k][a];
+  s[p].has(i) ? s[p].delete(i) : s[p].add(i);
+  b.classList.toggle("on", s[p].has(i));
+  b.textContent = s[p].has(i) ? bSimbol() : "";
+  if(!s.ikut){ s.ikut = true; const c = document.querySelector(`[data-ik="${a}"]`); if(c) c.checked = true; }
+  bRefreshRow(a);
+});
+$("bTabel").addEventListener("change", e => {
+  const c = e.target.closest("[data-ik]"); if(!c) return;
+  const k = $("bKelas").value, a = +c.dataset.ik;
+  BS[k][a].ikut = c.checked; bRefreshRow(a);
+});
+
+/* simpan semua siswa yang dicentang Ikut */
+async function bSimpan(){
+  const k = $("bKelas").value; if(!k) return toast("Pilih kelas terlebih dahulu");
+  const ps = bParts(), tgl = $("bTgl").value, ros = bRos(k);
+  const pilih = Object.entries(BS[k] || {}).filter(([a, s]) => s.ikut);
+  if(!pilih.length) return toast("Belum ada siswa yang dicentang Ikut");
+  if(!confirm(`Simpan penilaian ${pilih.length} siswa (${ps.map(p => NAMA[p]).join(" & ")})?`)) return;
+
+  const recs = [];
+  pilih.forEach(([a, s]) => {
+    const key = k + "|" + a;
+    let r = DB.find(x => x.key === key);
+    if(!r){ r = {key, kelas:k, absen:String(a), nama:"", W:null, S:null}; DB.push(r); }
+    r.nama = titleCase(ros[a-1] || r.nama);
+    ps.forEach(p => { r[p] = {penguji:SESSION.name, tgl, kode:[...s[p]].sort((x, y) => x - y), pend:true}; });
+    recs.push(r);
+  });
+  saveDB();
+
+  if(!CONFIG.API_URL){
+    recs.forEach(r => ps.forEach(p => r[p].pend = false));
+    saveDB(); setSync(); bRender();
+    return toast(recs.length + " siswa tersimpan di perangkat ini (mode lokal)");
+  }
+  setSync("busy");
+  let n = 0;
+  try{
+    for(const r of recs){
+      for(const p of ps) await push(r, p);
+      n++; toast(`Mengirim ${n}/${recs.length}…`);
+    }
+    setSync("ok"); bRender();
+    toast(recs.length + " siswa tersimpan & terkirim ke Google Sheets ✓");
+  }catch(e){
+    handleErr(e); bRender();
+    toast(`Tersimpan di perangkat (${n}/${recs.length} terkirim). Sisanya dicoba lagi otomatis.`);
+  }
+}
+  /* ============ LOGIN ============ */
 async function sha256(t){ const b=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(t)); return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,"0")).join(""); }
 async function doLogin(e){
   e.preventDefault();
