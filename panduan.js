@@ -11,12 +11,12 @@
     W: {
       ikon: "💧", nama: "Wudhu", judul: "Panduan Gerakan Wudhu",
       items: [
-        ["1. Mencuci tangan sambil membaca Basmalah", "1q7M3vbuYJeKswHeU2PcojhVgiKaHK5bO"],
-        ["2. Berkumur", "1vFvmtg1wjixPR4ZGqPnpQtSYV4U4BV7Q"],
-        ["3. Membasuh tangan", "1NvYommdk60g6dY_iamfTtLN6G2D3lqCb"],
-        ["4. Membasuh kepala sekaligus telinga", "1G1HvxbsjY_ApyOQNlud4gPYOwVRWEztr"],
-        ["5. Membasuh kaki", "1lwjWd_se6Y_GBamMyZ24HSoqMakzvXE-"],
-        ["6. Doa setelah wudhu", "1LoEkDjbOrAsY2xTCjcZV8zWQZARhyNSv"]
+        ["1. Mencuci tangan sambil membaca Basmalah", "yt:vi9lzqYGd20"],
+        ["2. Berkumur", "yt:p98czFjgc2c"],
+        ["3. Membasuh tangan", "yt:rSfHRbe2YIQ"],
+        ["4. Membasuh kepala sekaligus telinga", "yt:dpaWRoS-3rU"],
+        ["5. Membasuh kaki", "yt:JWgqiN50ay8"],
+        ["6. Doa setelah wudhu", "yt:PmUgUHhFy_A"]
       ]
     },
     S: {
