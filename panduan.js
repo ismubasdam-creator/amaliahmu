@@ -22,15 +22,15 @@
     S: {
       ikon: "🕌", nama: "Shalat", judul: "Panduan Tata Cara Shalat (Gerakan & Bacaan)",
       items: [
-        ["1. Persiapan shalat", "1GTOnU7FxoERFMljVHja9CANe9LFO8cC5"],
-        ["2. Takbiratul ihram dan Al-Fatihah", "1n9vh2lR9eGEMjiMbbrrkBFvzy9zM8wVM"],
-        ["3. Ruku'", "1D0ejtLZK4DzG7_NRdnBmjJMb7d8QvE_i"],
-        ["4. I'tidal", "1qjGHb2O1LurQUsczAYn8a_2-wQJIZvpt"],
-        ["5. Sujud", "1ABlsOzFY8urz7weQ5bx0kxjiiFoTeqfG"],
-        ["6. Duduk di antara dua sujud", "1SBL_b0HWOAnaM-xUsJtRDltcqRMaSpWj"],
-        ["7. Tasyahud awal", "1blSOi6p3K-0VpH4JndigV27wL9QucHdi"],
-        ["8. Tasyahud akhir", "1yDNxiddgWuwUjwCWPfj0EPsjMCRHx1Ph"],
-        ["9. Salam", "1yO-aoAEAJ96zpoeQf7A4O4egLn3unSiK"]
+        ["1. Persiapan shalat", "yt:8x8kCscM1Us"],
+        ["2. Takbiratul ihram dan Al-Fatihah", "yt:GWUyqooLuGI"],
+        ["3. Ruku'", "yt:sYT0flwnryk"],
+        ["4. I'tidal", "yt:g7AXsM5t6Xc"],
+        ["5. Sujud", "yt:2DThnG53ivs"],
+        ["6. Duduk di antara dua sujud", "yt:eOis4XEq-y8"],
+        ["7. Tasyahud awal", "yt:37L7dgohWTM"],
+        ["8. Tasyahud akhir", "yt:rwZ79RPn6rQ"],
+        ["9. Salam", "yt:muDD4TxtzzY"]
       ]
     },
     B: {
