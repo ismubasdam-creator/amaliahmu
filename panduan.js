@@ -63,7 +63,7 @@
     const list = g.items.map((x, i) => `<button type="button" onclick="PP.pick(${i})"
         class="text-left rounded-xl border px-3 py-2 text-sm ${i === st.cur ? "bg-emerald-700 text-white border-emerald-700" : "bg-white border-emerald-200 text-emerald-900 hover:bg-emerald-50"}">${esc(x[0])}</button>`).join("");
     return `<h3 class="font-bold text-emerald-900 mb-2">${g.ikon} ${esc(g.judul)}</h3>
-      <div class="rounded-xl overflow-hidden border border-emerald-200 bg-black aspect-video">${player}</div>
+      <div class="rounded-xl overflow-hidden border border-emerald-200 bg-black aspect-[4/3] sm:aspect-video">${player}</div>
       <div class="flex items-center justify-between gap-2 mt-2">
         <p class="text-sm font-semibold text-emerald-900 flex-1">${esc(it[0])}</p>
         ${multi ? `<button type="button" onclick="PP.step(-1)" class="px-3 py-1.5 rounded-lg border border-emerald-300 text-xs font-semibold text-emerald-900 ${st.cur === 0 ? "opacity-40" : ""}">◀ Sebelumnya</button>
