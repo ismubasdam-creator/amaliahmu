@@ -36,7 +36,7 @@
     B: {
       ikon: "📖", nama: "Bacaan Shalat", judul: "Bacaan Shalat Saja (tanpa gerakan)",
       items: [
-        ["Bacaan shalat lengkap", "1uG-hVggpjjV3h0TR5PYvnTJHW1ly7bQx"]
+        ["Bacaan shalat lengkap", "yt:NKqknyw3id0"]
       ]
     }
   };
