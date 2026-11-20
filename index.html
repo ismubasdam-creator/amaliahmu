@@ -332,61 +332,26 @@ const DATA = {W:WUDHU, S:SHALAT}, NAMA = {W:"Wudhu", S:"Shalat"};
 const cap = s => s.charAt(0).toUpperCase()+s.slice(1);
 const titleCase = s => String(s||"").trim().replace(/\s+/g," ").toLowerCase().replace(/(^|[\s\-'’.])([a-z])/g,(m,a,b)=>a+b.toUpperCase());
 const pred = p => p>=90 ? "Sangat Menguasai" : p>=75 ? "Menguasai" : p>=60 ? "Cukup" : "Perlu Bimbingan";
-
-/* ===== KELAS 1-2: HANYA GERAKAN (null = bacaan, tidak dinilai) ===== */
-const GERAKAN = {
-  W:[
-    null,
-    "membasuh kedua telapak tangan dan sela jari (kurang bersih)",
-    "berkumur dan menghirup air ke hidung (kurang sempurna)",
-    "membasuh seluruh muka (belum merata)",
-    "membasuh tangan kanan dan kiri (belum sampai siku)",
-    "mengusap kepala dan telinga (belum sempurna)",
-    "membasuh kedua kaki (belum melewati mata kaki)",
-    null,
-    "urutan gerakan wudhu (masih tertukar)"
-  ],
-  S:[
-    "posisi tangan saat takbiratul ihram dan bersedekap (kurang tepat)",
-    null,
-    null,
-    "posisi ruku' (punggung belum lurus)",
-    "posisi i'tidal (kurang tuma'ninah)",
-    "posisi sujud (anggota sujud belum sempurna)",
-    "posisi duduk di antara dua sujud (belum tepat)",
-    "posisi duduk tasyahud (belum tepat)",
-    null,
-    "gerakan salam (menoleh kurang sempurna)"
-  ]
-};
-const rendah = k => { const n = parseInt(k); return n >= 1 && n <= 2; };
-const aktif = (p,kelas) => DATA[p].map((_,i)=>i).filter(i => !rendah(kelas) || GERAKAN[p][i]);
-const teks = (p,i,kelas) => rendah(kelas) ? GERAKAN[p][i] : DATA[p][i][1];
-
-function metrik(p,kode,kelas){
-  const ak=aktif(p,kelas), kur=kode.filter(i=>ak.includes(i));
-  const t=ak.length, b=t-kur.length, persen=Math.round(b/t*100);
-  return {t,b,persen,pred:pred(persen),kur};
-}
+function metrik(p,kode){ const t=DATA[p].length, b=t-kode.length, persen=Math.round(b/t*100); return {t,b,persen,pred:pred(persen)}; }
 function overall(rec){
-  let t=0,b=0; ["W","S"].forEach(p=>{ if(rec[p]){ const m=metrik(p,rec[p].kode,rec.kelas); t+=m.t; b+=m.b; } });
+  let t=0,b=0; ["W","S"].forEach(p=>{ if(rec[p]){ const m=metrik(p,rec[p].kode); t+=m.t; b+=m.b; } });
   if(!t) return null; const persen=Math.round(b/t*100); return {persen,pred:pred(persen),lengkap:!!(rec.W&&rec.S)};
 }
-const kurangText = (p,kode,kelas) => kode.filter(i=>aktif(p,kelas).includes(i)).map(i=>NAMA[p]+": "+teks(p,i,kelas)).join("; ") || "-";
+const kurangText = (p,kode) => kode.map(i=>NAMA[p]+": "+DATA[p][i][1]).join("; ") || "-";
 const gabung = a => a.join("; ");
 const PH = {"Sangat Menguasai":"sangat menguasai hampir seluruh aspek","Menguasai":"menguasai sebagian besar aspek","Cukup":"cukup menguasai, namun beberapa aspek masih perlu diperbaiki","Perlu Bimbingan":"belum menguasai sejumlah aspek penting"};
 const PENUTUP = {"Sangat Menguasai":"Pertahankan prestasi ini dan teruslah mengamalkannya dalam ibadah sehari-hari.","Menguasai":"Terus berlatih agar semakin sempurna.","Cukup":"Ananda perlu lebih sering berlatih dengan bimbingan guru dan orang tua di rumah.","Perlu Bimbingan":"Ananda memerlukan bimbingan intensif dan pendampingan rutin dari guru dan orang tua."};
-function partNarr(p,d,nama,kelas){
-  const m=metrik(p,d.kode,kelas), n=NAMA[p].toLowerCase(), g=rendah(kelas), kata=g?"gerakan":"praktik", unsur=g?"gerakan":"aspek";
-  if(!m.kur.length) return `Pada ${kata} ${n}, ananda ${nama} sangat menguasai seluruh ${unsur} dengan benar dan tertib (capaian 100%, predikat Sangat Menguasai).`;
-  return `Pada ${kata} ${n}, ananda ${nama} ${PH[m.pred]} (capaian ${m.persen}%, predikat ${m.pred}). ${cap(unsur)} yang perlu ditingkatkan: ${gabung(m.kur.map(i=>teks(p,i,kelas)))}.`;
+function partNarr(p,d,nama){
+  const m=metrik(p,d.kode), n=NAMA[p].toLowerCase();
+  if(!d.kode.length) return `Pada praktik ${n}, ananda ${nama} sangat menguasai seluruh aspek dengan benar dan tertib (capaian 100%, predikat Sangat Menguasai).`;
+  return `Pada praktik ${n}, ananda ${nama} ${PH[m.pred]} (capaian ${m.persen}%, predikat ${m.pred}). Aspek yang perlu ditingkatkan: ${gabung(d.kode.map(i=>DATA[p][i][1]))}.`;
 }
 function narasiRec(rec){
   const ps=["W","S"].filter(p=>rec[p]); if(!ps.length) return "";
-  const nama=rec.nama||"(nama siswa)", o=overall(rec), g=rendah(rec.kelas), kata=g?"gerakan":"praktik";
-  let t=`Ananda ${nama}${rec.kelas?` dari kelas ${rec.kelas}`:""} telah mengikuti penilaian ${kata} ${ps.map(p=>NAMA[p].toLowerCase()).join(" dan ")} sesuai tuntunan Tarjih Muhammadiyah. `;
-  t+=ps.map(p=>partNarr(p,rec[p],nama,rec.kelas)).join(" ");
-  if(ps.length===2) t+=` Secara keseluruhan, capaian ${g?"gerakan ":""}ananda ${o.persen}% dengan predikat ${o.pred}.`;
+  const nama=rec.nama||"(nama siswa)", o=overall(rec);
+  let t=`Ananda ${nama}${rec.kelas?` dari kelas ${rec.kelas}`:""} telah mengikuti penilaian praktik ${ps.map(p=>NAMA[p].toLowerCase()).join(" dan ")} sesuai tuntunan Tarjih Muhammadiyah. `;
+  t+=ps.map(p=>partNarr(p,rec[p],nama)).join(" ");
+  if(ps.length===2) t+=` Secara keseluruhan, capaian ananda ${o.persen}% dengan predikat ${o.pred}.`;
   return t+" "+PENUTUP[o.pred];
 }
 //#PURE-END
@@ -431,14 +396,6 @@ document.addEventListener("click",e=>{
   set.has(i)?set.delete(i):set.add(i); b.classList.toggle("bad",set.has(i)); refresh();
 });
 const syncButtons = () => document.querySelectorAll(".item").forEach(b=>b.classList.toggle("bad",fl[b.dataset.g].has(+b.dataset.i)));
-  function sembunyiBacaan(){
-  const r=rendah($("kelas").value);
-  document.querySelectorAll(".item").forEach(b=>{
-    const g=b.dataset.g, i=+b.dataset.i, sembunyi=r&&!GERAKAN[g][i];
-    b.classList.toggle("hidden",sembunyi);
-    if(sembunyi) fl[g].delete(i);
-  });
-}
 
 function currentRec(){
   const key=mkKey(), ex=key?DB.find(r=>r.key===key):null;
@@ -449,7 +406,7 @@ function currentRec(){
 function refresh(){
   const rec=currentRec(), ps=parts();
   $("narasi").textContent=narasiRec({...rec,W:ps.includes("W")?rec.W:null,S:ps.includes("S")?rec.S:null});
-  ["W","S"].forEach(p=>{ const m=metrik(p,[...fl[p]],$("kelas").value); $("b"+p).innerHTML=`<span class="px-2 py-0.5 rounded-full text-xs font-bold ${PC[m.pred]}">${m.persen}% · ${m.pred}</span>`; });
+  ["W","S"].forEach(p=>{ const m=metrik(p,[...fl[p]]); $("b"+p).innerHTML=`<span class="px-2 py-0.5 rounded-full text-xs font-bold ${PC[m.pred]}">${m.persen}% · ${m.pred}</span>`; });
 }
 function info(){
   const key=mkKey(), r=key?DB.find(x=>x.key===key):null, el=$("info");
@@ -478,7 +435,7 @@ function lookup(){
     if(rn){ if(!$("nama").value.trim()||$("nama").value===autoName){ $("nama").value=rn; autoName=rn; } }
     else if(autoName&&$("nama").value===autoName){ $("nama").value=""; autoName=""; }
   }
-  fillPilih(); sembunyiBacaan(); syncButtons(); info(); refresh();
+  fillPilih(); syncButtons(); info(); refresh();
 }
 ["kelas","absen"].forEach(id=>$(id).addEventListener("change",lookup));
 $("pilih").addEventListener("change",()=>{ $("absen").value=$("pilih").value; $("nama").value=""; autoName=""; lookup(); });
@@ -537,8 +494,8 @@ function setSync(s){
 }
 function handleErr(e){ if(e&&e.message==="auth"){ toast("Sesi tidak valid. Silakan masuk kembali."); logout(); } else setSync("err"); }
 async function push(rec,p){
-  const d=rec[p], m=metrik(p,d.kode,rec.kelas);
-  await api("save",{rec:{key:rec.key,kelas:rec.kelas,absen:rec.absen,nama:rec.nama,part:p,data:{penguji:d.penguji,tgl:d.tgl,persen:m.persen,pred:m.pred,kurang:kurangText(p,d.kode,rec.kelas),kode:d.kode.join(",")}}});
+  const d=rec[p], m=metrik(p,d.kode);
+  await api("save",{rec:{key:rec.key,kelas:rec.kelas,absen:rec.absen,nama:rec.nama,part:p,data:{penguji:d.penguji,tgl:d.tgl,persen:m.persen,pred:m.pred,kurang:kurangText(p,d.kode),kode:d.kode.join(",")}}});
   d.pend=false; saveDB();
 }
 function fromRow(x){
@@ -594,11 +551,11 @@ function ringkas(list){
     return [k,x.length,x.filter(r=>r.W).length,x.filter(r=>r.S).length,c["Sangat Menguasai"]||0,c["Menguasai"]||0,c["Cukup"]||0,c["Perlu Bimbingan"]||0];
   }).filter(Boolean);
 }
-const catatan = r => ["W","S"].filter(p=>r[p]).map(p=>kurangText(p,r[p].kode,r.kelas)).filter(x=>x!=="-").join("; ") || "Tidak ada catatan kekurangan";
+const catatan = r => ["W","S"].filter(p=>r[p]).map(p=>kurangText(p,r[p].kode)).filter(x=>x!=="-").join("; ") || "Tidak ada catatan kekurangan";
 const finalTxt = r => { const o=overall(r); return o ? `${o.pred} ${o.persen}%`+(o.lengkap?"":" (sebagian)") : "-"; };
 function cellP(r,p){
   if(!r[p]) return '<span class="text-xs text-emerald-800/60">Belum dinilai</span>';
-  const m=metrik(p,r[p].kode,r.kelas);
+  const m=metrik(p,r[p].kode);
   return `<span class="px-2 py-0.5 rounded-full text-xs font-bold whitespace-nowrap ${PC[m.pred]}">${m.pred} ${m.persen}%</span><div class="text-[11px] text-emerald-800/70 mt-0.5">${esc(r[p].penguji)}</div>`;
 }
 function renderRekap(){
@@ -608,8 +565,8 @@ function renderRekap(){
   $("tblRekap").innerHTML=d.length?`<thead><tr>${["No","Absen","Nama","Kelas","Wudhu","Shalat","Predikat akhir","Catatan",""].map(x=>`<th class="${th}">${x}</th>`).join("")}</tr></thead><tbody>${d.map((r,i)=>`<tr><td class="${td}">${i+1}</td><td class="${td}">${esc(r.absen)}</td><td class="${td} font-semibold">${esc(r.nama)}</td><td class="${td}">${esc(r.kelas)}</td><td class="${td}">${cellP(r,"W")}</td><td class="${td}">${cellP(r,"S")}</td><td class="${td} text-xs font-semibold">${esc(finalTxt(r))}</td><td class="${td} text-xs min-w-[220px]">${esc(catatan(r))}</td><td class="${td} whitespace-nowrap"><button data-k="${esc(r.key)}" onclick="muat(this.dataset.k)" class="px-2 py-1 rounded bg-emerald-700 text-white text-xs">Buka</button> <button data-k="${esc(r.key)}" onclick="cetakKey(this.dataset.k)" class="px-2 py-1 rounded bg-amber-500 text-white text-xs">Cetak</button> <button data-k="${esc(r.key)}" onclick="hapus(this.dataset.k)" class="px-2 py-1 rounded border border-orange-300 text-orange-700 text-xs">Hapus</button></td></tr>`).join("")}</tbody>`:`<tbody><tr><td class="p-4 text-sm text-emerald-800">Belum ada data penilaian${$("fKelas").value?" untuk kelas ini":""}.</td></tr></tbody>`;
 }
 const fileTag = () => ($("fKelas").value||"Semua_Kelas").replace(/\s+/g,"_")+"_"+today();
-const partCells=(r,p)=>{ const d=r[p]; if(!d) return ["Belum dinilai","","","",...DATA[p].map(()=>"")]; const m=metrik(p,d.kode,r.kelas), ak=aktif(p,r.kelas); return [d.penguji,fmtTgl(d.tgl),m.persen,m.pred,...DATA[p].map((_,i)=>!ak.includes(i)?"-":d.kode.includes(i)?"Kurang":"Baik")]; };
-  function exportXlsx(){
+const partCells=(r,p)=>{ const d=r[p]; if(!d) return ["Belum dinilai","","","",...DATA[p].map(()=>"")]; const m=metrik(p,d.kode); return [d.penguji,fmtTgl(d.tgl),m.persen,m.pred,...DATA[p].map((_,i)=>d.kode.includes(i)?"Kurang":"Baik")]; };
+function exportXlsx(){
   if(!window.XLSX) return toast("Pustaka Excel belum termuat. Periksa koneksi internet.");
   const d=rekapData(); if(!d.length) return toast("Belum ada data untuk diunduh");
   const wb=XLSX.utils.book_new();
@@ -634,7 +591,7 @@ function exportPdf(){
   doc.setFont("helvetica","normal"); doc.setFontSize(10); doc.text("Rekap Evaluasi Praktik Ibadah & Wudhu ISMUBA - "+f,14,20);
   doc.setFontSize(8); doc.text("Dicetak "+fmtTgl(today())+" oleh "+SESSION.name,14,25);
   doc.autoTable({startY:29,head:[["Kelas","Siswa","Wudhu dinilai","Shalat dinilai","Sangat Menguasai","Menguasai","Cukup","Perlu Bimbingan"]],body:ringkas(d).map(r=>r.map(String)),styles:{fontSize:8},headStyles:{fillColor:[4,120,87]}});
-  const pc=(r,p)=>{ if(!r[p]) return "Belum dinilai"; const m=metrik(p,r[p].kode,r.kelas); return m.pred+" "+m.persen+"%\n("+r[p].penguji+")"; };
+  const pc=(r,p)=>{ if(!r[p]) return "Belum dinilai"; const m=metrik(p,r[p].kode); return m.pred+" "+m.persen+"%\n("+r[p].penguji+")"; };
   doc.autoTable({startY:doc.lastAutoTable.finalY+6,head:[["No","Absen","Nama Siswa","Kelas","Wudhu","Shalat","Predikat Akhir","Catatan Evaluasi"]],
     body:d.map((r,i)=>[String(i+1),r.absen,r.nama,r.kelas,pc(r,"W"),pc(r,"S"),finalTxt(r),catatan(r)]),
     styles:{fontSize:7.5,cellPadding:1.5},headStyles:{fillColor:[4,120,87]},columnStyles:{7:{cellWidth:80}}});
@@ -645,11 +602,12 @@ function exportPdf(){
 function partTable(p,rec){
   const d=rec[p], title=NAMA[p], tdS="border:1px solid #444;padding:2px 5px;font-size:10.5px";
   if(!d) return `<div><div style="font-weight:bold;font-size:12px;margin-bottom:3px">${title}</div><div style="border:1px dashed #888;padding:16px;text-align:center;font-size:11px;color:#666">Belum dinilai</div></div>`;
-  const m=metrik(p,d.kode,rec.kelas), set=new Set(d.kode);
-  const rows=aktif(p,rec.kelas).map(i=>`<tr><td style="${tdS}">${cap(teks(p,i,rec.kelas))}</td><td style="${tdS};text-align:center;white-space:nowrap;${set.has(i)?"background:#ffe4d6;font-weight:bold;color:#b45309":"color:#166534"}">${set.has(i)?"Perlu bimbingan":"Baik"}</td></tr>`).join("");
+  const m=metrik(p,d.kode), set=new Set(d.kode);
+  const rows=DATA[p].map((x,i)=>`<tr><td style="${tdS}">${cap(x[1])}</td><td style="${tdS};text-align:center;white-space:nowrap;${set.has(i)?"background:#ffe4d6;font-weight:bold;color:#b45309":"color:#166534"}">${set.has(i)?"Perlu bimbingan":"Baik"}</td></tr>`).join("");
   return `<div><div style="font-weight:bold;font-size:12px">${title} - ${m.pred} (${m.persen}%)</div><div style="font-size:10px;margin-bottom:3px">Penguji: ${esc(d.penguji)} | ${fmtTgl(d.tgl)}</div>
-    <table style="width:100%;border-collapse:collapse"><thead><tr style="background:#dcefe2"><th style="${tdS}">${rendah(rec.kelas)?"Gerakan yang dinilai":"Aspek yang dinilai"}</th><th style="${tdS}">Capaian</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+    <table style="width:100%;border-collapse:collapse"><thead><tr style="background:#dcefe2"><th style="${tdS}">Aspek yang dinilai</th><th style="${tdS}">Capaian</th></tr></thead><tbody>${rows}</tbody></table></div>`;
 }
+function certHTML(rec){
   const o=overall(rec), tg=["W","S"].filter(p=>rec[p]).map(p=>rec[p].tgl).sort().pop()||today();
   const ttd=p=>`<div style="text-align:center;width:44%">Penguji ${NAMA[p]}<br><br><br><br><b><u>${rec[p]?esc(rec[p].penguji):"..............................."}</u></b></div>`;
   return `<div style="border:3px double #166534;padding:14px 18px">
@@ -719,7 +677,7 @@ function grafikHTML(){
   const label=k?"Kelas "+k:t?"Kelas "+t+" (semua kelas)":"Seluruh Kelas 1-6";
   if(!d.length) return gBox("Cakupan: "+esc(label),'<div style="font-size:13px">Belum ada data penilaian untuk pilihan ini.</div>');
   const avg=a=>a.length?Math.round(a.reduce((x,y)=>x+y,0)/a.length):0;
-  const pc=(rs,p)=>rs.filter(r=>r[p]).map(r=>metrik(p,r[p].kode,r.kelas).persen);
+  const pc=(rs,p)=>rs.filter(r=>r[p]).map(r=>metrik(p,r[p].kode).persen);
   const fin=d.map(overall).filter(Boolean).map(o=>o.persen);
   const nW=d.filter(r=>r.W).length, nS=d.filter(r=>r.S).length;
 
@@ -734,7 +692,7 @@ function grafikHTML(){
   // 1. Distribusi predikat
   ["W","S"].forEach(p=>{
     const rs=d.filter(r=>r[p]), c={};
-    rs.forEach(r=>{ const m=metrik(p,r[p].kode,r.kelas); c[m.pred]=(c[m.pred]||0)+1; });
+    rs.forEach(r=>{ const m=metrik(p,r[p].kode); c[m.pred]=(c[m.pred]||0)+1; });
     const inner=rs.length?["Sangat Menguasai","Menguasai","Cukup","Perlu Bimbingan"].map(pr=>{
       const n=c[pr]||0, v=Math.round(n/rs.length*100); return gBar(pr,v,PCOL[pr],`${n} siswa (${v}%)`);
     }).join(""):'<div style="font-size:12px">Belum ada penilaian.</div>';
@@ -760,8 +718,7 @@ function grafikHTML(){
   ["W","S"].forEach(p=>{
     const rs=d.filter(r=>r[p]);
     const inner=rs.length?DATA[p].map((x,i)=>{
-      const rr=rs.filter(r=>aktif(p,r.kelas).includes(i)); if(!rr.length) return "";
-      const baik=rr.filter(r=>!r[p].kode.includes(i)).length, v=Math.round(baik/rr.length*100);
+      const baik=rs.filter(r=>!r[p].kode.includes(i)).length, v=Math.round(baik/rs.length*100);
       if(!lemah||v<lemah.v) lemah={v,p,t:x[1]};
       return gBar(cap(x[1]),v,v>=75?"#059669":v>=60?"#f59e0b":"#f97316",`${v}% baik`);
     }).join(""):'<div style="font-size:12px">Belum ada penilaian.</div>';
@@ -1038,7 +995,7 @@ function bPredHTML(s){
 }
 function bRefreshRow(a){
   const k = $("bKelas").value, s = BS[k] && BS[k][a]; if(!s) return;
-  bParts().forEach(p => { const c = $(`bkw-${p}-${a}`); if(c) c.textContent = [...s[p]].filter(i=>aktif(p,k).includes(i)).length; });
+  bParts().forEach(p => { const c = $(`bkw-${p}-${a}`); if(c) c.textContent = s[p].size; });
   const c = $("bpr-" + a); if(c) c.innerHTML = bPredHTML(s);
   bHitung();
 }
@@ -1069,11 +1026,12 @@ function bRender(){
     <th rowspan="2" ${th} style="${BST(0,0,6,"#d1fae5")};width:44px;height:30px">Ikut</th>
     <th rowspan="2" ${th} style="${BST(44,0,6,"#d1fae5")};width:34px">No</th>
     <th rowspan="2" ${th} style="${BST(78,0,6,"#d1fae5")};min-width:140px">Nama Siswa</th>
-    ${ps.map(p => `<th colspan="${aktif(p,k).length}" ${th} style="${BST(null,0,4,GCOL[p])};height:30px">${NAMA[p].toUpperCase()}</th>`).join("")}
+    ${ps.map(p => `<th colspan="${DATA[p].length}" ${th} style="${BST(null,0,4,GCOL[p])};height:30px">${NAMA[p].toUpperCase()}</th>`).join("")}
     ${ps.map(p => `<th rowspan="2" ${th} style="${BST(null,0,4,"#fff4d6")};min-width:52px">Kurang ${p}</th>`).join("")}
     <th rowspan="2" ${th} style="${BST(null,0,4,"#d1fae5")};min-width:120px">Predikat</th>
     <th rowspan="2" ${th} style="${BST(null,0,4,"#d1fae5")};min-width:70px">Status</th></tr>`;
-  const h2 = const h2 = `<tr>${ps.map(p => aktif(p,k).map(i => `<th ${th} title="${esc(cap(DATA[p][i][1]))}" style="${BST(null,30,4,GCOL[p])};height:150px;min-width:38px;padding:4px 0;vertical-align:bottom"><div style="writing-mode:vertical-rl;transform:rotate(180deg);white-space:nowrap;margin:0 auto;font-size:11px;font-weight:600;line-height:1.1">${i+1}. ${esc(BSHORT[p][i])}</div></th>`).join("")).join("")}</tr>`;
+  const h2 = `<tr>${ps.map(p => DATA[p].map((x,i) => `<th ${th} title="${esc(cap(x[1]))}" style="${BST(null,30,4,GCOL[p])};height:150px;min-width:38px;padding:4px 0;vertical-align:bottom"><div style="writing-mode:vertical-rl;transform:rotate(180deg);white-space:nowrap;margin:0 auto;font-size:11px;font-weight:600;line-height:1.1">${i+1}. ${esc(BSHORT[p][i])}</div></th>`).join("")).join("")}</tr>`;
+
   /* baris siswa */
   let rows = "";
   ros.forEach((nm, i) => {
@@ -1084,8 +1042,8 @@ function bRender(){
       <td style="${BST(0,null,2,"#fff")};text-align:center" class="border border-emerald-100"><input type="checkbox" data-ik="${a}" ${s.ikut?"checked":""} style="width:20px;height:20px"></td>
       <td style="${BST(44,null,2,"#fff")};text-align:center" class="border border-emerald-100 text-xs">${a}</td>
       <td style="${BST(78,null,2,"#fff")};min-width:140px;max-width:140px;font-size:12px;padding:2px 6px" class="border border-emerald-100">${esc(nm)}</td>
-      ${ps.map(p => aktif(p,k).map(j => `<td ${td}><button type="button" class="bc ${s[p].has(j)?"on":""}" data-a="${a}" data-p="${p}" data-i="${j}">${s[p].has(j)?bSimbol():""}</button></td>`).join("")).join("")}
-      ${ps.map(p => `<td id="bkw-${p}-${a}" ${td}>${[...s[p]].filter(i=>aktif(p,k).includes(i)).length}</td>`).join("")}
+      ${ps.map(p => DATA[p].map((_, j) => `<td ${td}><button type="button" class="bc ${s[p].has(j)?"on":""}" data-a="${a}" data-p="${p}" data-i="${j}">${s[p].has(j)?bSimbol():""}</button></td>`).join("")).join("")}
+      ${ps.map(p => `<td id="bkw-${p}-${a}" ${td}>${s[p].size}</td>`).join("")}
       <td id="bpr-${a}" ${td}>${bPredHTML(s)}</td>
       <td ${td} class="border border-emerald-100 text-center text-[11px]" title="${esc(ps.map(p => r && r[p] ? NAMA[p]+": "+r[p].penguji : NAMA[p]+": belum").join(" | "))}">${ps.map(p => p + (r && r[p] ? "✓" : "–")).join(" ")}</td>
     </tr>`;
@@ -1124,7 +1082,7 @@ async function bSimpan(){
     let r = DB.find(x => x.key === key);
     if(!r){ r = {key, kelas:k, absen:String(a), nama:"", W:null, S:null}; DB.push(r); }
     r.nama = titleCase(ros[a-1] || r.nama);
-    ps.forEach(p => { r[p] = {penguji:SESSION.name, tgl, kode:[...s[p]].filter(i=>aktif(p,k).includes(i)).sort((x, y) => x - y), pend:true}; });
+    ps.forEach(p => { r[p] = {penguji:SESSION.name, tgl, kode:[...s[p]].sort((x, y) => x - y), pend:true}; });
     recs.push(r);
   });
   saveDB();
