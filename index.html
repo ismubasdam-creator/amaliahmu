@@ -329,6 +329,51 @@ const GUIDE = [
 
 //#PURE-START
 const DATA = {W:WUDHU, S:SHALAT}, NAMA = {W:"Wudhu", S:"Shalat"};
+  /* ===== KELAS 1-2: DESKRIPSI HANYA GERAKAN (null = bacaan, dilewati) ===== */
+const GERAKAN = {
+  W:[
+    null,                                                        // W1 Basmalah
+    "membasuh kedua telapak tangan dan sela jari (kurang bersih)",
+    "berkumur dan menghirup air ke hidung (kurang sempurna)",
+    "membasuh seluruh muka (belum merata)",
+    "membasuh tangan kanan dan kiri (belum sampai siku)",
+    "mengusap kepala dan telinga (belum sempurna)",
+    "membasuh kedua kaki (belum melewati mata kaki)",
+    null,                                                        // W8 Doa setelah wudhu
+    "urutan gerakan wudhu (masih tertukar)"
+  ],
+  S:[
+    "posisi tangan saat takbiratul ihram dan bersedekap (kurang tepat)",
+    null,                                                        // S2 Doa iftitah
+    null,                                                        // S3 Al-Fatihah & surat
+    "posisi ruku' (punggung belum lurus)",
+    "posisi i'tidal (kurang tuma'ninah)",
+    "posisi sujud (anggota sujud belum sempurna)",
+    "posisi duduk di antara dua sujud (belum tepat)",
+    "posisi duduk tasyahud (belum tepat)",
+    null,                                                        // S9 Doa sebelum salam
+    "gerakan salam (menoleh kurang sempurna)"
+  ]
+};
+const rendah = k => { const n = parseInt(k); return n >= 1 && n <= 2; };
+function metrikG(p,kode){
+  const t = GERAKAN[p].filter(Boolean).length;
+  const kur = kode.filter(i => GERAKAN[p][i]);
+  const persen = Math.round((t-kur.length)/t*100);
+  return {t, kur, persen, pred:pred(persen)};
+}
+function partNarrG(p,d,nama){
+  const m = metrikG(p,d.kode), n = NAMA[p].toLowerCase();
+  if(!m.kur.length) return `Pada gerakan ${n}, ananda ${nama} sangat menguasai seluruh gerakan dengan benar dan tertib (capaian 100%, predikat Sangat Menguasai).`;
+  return `Pada gerakan ${n}, ananda ${nama} ${PH[m.pred]} (capaian ${m.persen}%, predikat ${m.pred}). Gerakan yang perlu ditingkatkan: ${gabung(m.kur.map(i=>GERAKAN[p][i]))}.`;
+}
+function overallG(rec){
+  let t=0, b=0;
+  ["W","S"].forEach(p=>{ if(rec[p]){ const m=metrikG(p,rec[p].kode); t+=m.t; b+=m.t-m.kur.length; } });
+  if(!t) return null;
+  const persen = Math.round(b/t*100);
+  return {persen, pred:pred(persen)};
+}
 const cap = s => s.charAt(0).toUpperCase()+s.slice(1);
 const titleCase = s => String(s||"").trim().replace(/\s+/g," ").toLowerCase().replace(/(^|[\s\-'’.])([a-z])/g,(m,a,b)=>a+b.toUpperCase());
 const pred = p => p>=90 ? "Sangat Menguasai" : p>=75 ? "Menguasai" : p>=60 ? "Cukup" : "Perlu Bimbingan";
@@ -348,7 +393,18 @@ function partNarr(p,d,nama){
 }
 function narasiRec(rec){
   const ps=["W","S"].filter(p=>rec[p]); if(!ps.length) return "";
-  const nama=rec.nama||"(nama siswa)", o=overall(rec);
+  const nama=rec.nama||"(nama siswa)";
+
+  if(rendah(rec.kelas)){            // ===== KELAS 1 & 2: gerakan saja =====
+    const o=overallG(rec);
+    let t=`Ananda ${nama}${rec.kelas?` dari kelas ${rec.kelas}`:""} telah mengikuti penilaian gerakan ${ps.map(p=>NAMA[p].toLowerCase()).join(" dan ")} sesuai tuntunan Tarjih Muhammadiyah. `;
+    t+=ps.map(p=>partNarrG(p,rec[p],nama)).join(" ");
+    if(ps.length===2) t+=` Secara keseluruhan, capaian gerakan ananda ${o.persen}% dengan predikat ${o.pred}.`;
+    return t+" "+PENUTUP[o.pred];
+  }
+
+  // ===== KELAS 3-6: tetap seperti semula (gerakan + bacaan) =====
+  const o=overall(rec);
   let t=`Ananda ${nama}${rec.kelas?` dari kelas ${rec.kelas}`:""} telah mengikuti penilaian praktik ${ps.map(p=>NAMA[p].toLowerCase()).join(" dan ")} sesuai tuntunan Tarjih Muhammadiyah. `;
   t+=ps.map(p=>partNarr(p,rec[p],nama)).join(" ");
   if(ps.length===2) t+=` Secara keseluruhan, capaian ananda ${o.persen}% dengan predikat ${o.pred}.`;
