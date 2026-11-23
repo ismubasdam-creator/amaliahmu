@@ -151,7 +151,7 @@
     <div id="listW" class="grid gap-2"></div>
   </section>
   <section id="secS" class="mb-6">
-    <h2 class="font-bold text-lg text-emerald-900 mb-2">B. Kelompok Shalat (Gerakan &amp; Bacaan) <span id="bS" class="ml-1 align-middle"></span></h2>
+    <h2 class="font-bold text-lg text-emerald-900 mb-2"><span id="tS">B. Kelompok Shalat (Gerakan &amp; Bacaan)</span> <span id="bS" class="ml-1 align-middle"></span></h2>
     <div id="listS" class="grid gap-2"></div>
   </section>
 
@@ -317,7 +317,20 @@ const SHALAT = [
  ["Doa Sebelum Salam \"Allahumma inni a'udzubika min 'adzabi jahannam...\" (Belum hafal / kurang lancar)","doa sebelum salam (belum hafal/kurang lancar)"],
  ["Salam (Gerakan menoleh ke kanan dan kiri kurang sempurna)","salam (gerakan menoleh kurang sempurna)"]
 ];
-const GUIDE = [
+const SHALAT_G = [
+ ["Takbiratul Ihram (Gerakan mengangkat tangan kurang tepat)","takbiratul ihram (gerakan kurang tepat)"],
+ ["Bersedekap (1) (Posisi tangan bersedekap kurang tepat)","bersedekap bagian 1 (posisi tangan kurang tepat)"],
+ ["Bersedekap (2) (Posisi tangan bersedekap kurang tepat)","bersedekap bagian 2 (posisi tangan kurang tepat)"],
+ ["Rukuk (Punggung belum lurus / kurang tuma'ninah)","gerakan ruku' (punggung belum lurus/kurang tuma'ninah)"],
+ ["I'tidal (Berdiri belum tegak / kurang tuma'ninah)","gerakan i'tidal (belum tegak/kurang tuma'ninah)"],
+ ["Sujud (Dahi, hidung, telapak tangan, lutut, atau ujung kaki belum sempurna)","gerakan sujud (anggota sujud belum sempurna)"],
+ ["Duduk di Antara Dua Sujud (Posisi duduk belum tepat)","duduk di antara dua sujud (posisi belum tepat)"],
+ ["Tasyahud Awal (Posisi duduk belum tepat)","tasyahud awal (posisi duduk belum tepat)"],
+ ["Tasyahud Akhir (Posisi duduk belum tepat)","tasyahud akhir (posisi duduk belum tepat)"],
+ ["Salam (Gerakan menoleh ke kanan dan kiri kurang sempurna)","salam (gerakan menoleh kurang sempurna)"]
+];
+const BSHORT_G = ["Takbiratul ihram","Bersedekap (1)","Bersedekap (2)","Rukuk","I'tidal","Sujud","Duduk antara 2 sujud","Tasyahud awal","Tasyahud akhir","Salam"];
+  const GUIDE = [
  ["1. Doa Setelah Wudhu","أَشْهَدُ أَنْ لاَ إِلَٰهَ إِلاَّ اللهُ وَحْدَهُ لاَ شَرِيْكَ لَهُ وَأَشْهَدُ أَنَّ مُحَمَّدًا عَبْدُهُ وَرَسُوْلُهُ ","Asyhadu al-lā ilāha illallāhu waḥdahū lā syarīka lah, wa asyhadu anna Muḥammadan 'abduhū wa rasūluh. Allāhummaj'alnī minat-tawwābīna waj'alnī minal-mutaṭahhirīn.","Aku bersaksi bahwa tiada Tuhan selain Allah semata, tiada sekutu bagi-Nya, dan aku bersaksi bahwa Muhammad adalah hamba dan utusan-Nya. Ya Allah, jadikanlah aku termasuk orang-orang yang bertobat dan orang-orang yang bersuci."],
  ["2. Doa Iftitah","اللَّهُمَّ بَاعِدْ بَيْنِي وَبَيْنَ خَطَايَايَ كَمَا بَاعَدْتَ بَيْنَ الْمَشْرِقِ وَالْمَغْرِبِ، اللَّهُمَّ نَقِّنِي مِنَ الْخَطَايَا كَمَا يُنَقَّى الثَّوْبُ الأَبْيَضُ مِنَ الدَّنَسِ، اللَّهُمَّ اغْسِلْ خَطَايَايَ بِالْمَاءِ وَالثَّلْجِ وَالْبَرَدِ","Allāhumma bā'id bainī wa baina khaṭāyāya kamā bā'adta bainal-masyriqi wal-magrib. Allāhumma naqqinī minal-khaṭāyā kamā yunaqqats-tsaubul-abyaḍu minad-danas. Allāhummaghsil khaṭāyāya bil-mā'i wats-tsalji wal-barad.","Ya Allah, jauhkanlah antara aku dan kesalahanku sebagaimana Engkau jauhkan antara timur dan barat. Ya Allah, bersihkanlah aku dari kesalahan sebagaimana kain putih dibersihkan dari kotoran. Ya Allah, cucilah kesalahanku dengan air, salju, dan embun."],
  ["3. Ruku' & Sujud","سُبْحَانَكَ اللَّهُمَّ رَبَّنَا وَبِحَمْدِكَ اللَّهُمَّ اغْفِرْ لِي","Subḥānakallāhumma rabbanā wa biḥamdik, Allāhummaghfir lī.","Maha Suci Engkau, ya Allah, Tuhan kami, dan dengan memuji-Mu. Ya Allah, ampunilah aku."],
@@ -329,6 +342,9 @@ const GUIDE = [
 
 //#PURE-START
 const DATA = {W:WUDHU, S:SHALAT}, NAMA = {W:"Wudhu", S:"Shalat"};
+const g12 = k => [1,2].includes(parseInt(k));                       // kelas 1 & 2?
+const dl  = (p,k) => (p==="S" && g12(k)) ? SHALAT_G : DATA[p];      // daftar aspek sesuai kelas
+const bsh = (p,k) => (p==="S" && g12(k)) ? BSHORT_G : BSHORT[p];    // nama pendek (Rombongan)
 const cap = s => s.charAt(0).toUpperCase()+s.slice(1);
 const titleCase = s => String(s||"").trim().replace(/\s+/g," ").toLowerCase().replace(/(^|[\s\-'’.])([a-z])/g,(m,a,b)=>a+b.toUpperCase());
 const pred = p => p>=90 ? "Sangat Menguasai" : p>=75 ? "Menguasai" : p>=60 ? "Cukup" : "Perlu Bimbingan";
@@ -337,20 +353,20 @@ function overall(rec){
   let t=0,b=0; ["W","S"].forEach(p=>{ if(rec[p]){ const m=metrik(p,rec[p].kode); t+=m.t; b+=m.b; } });
   if(!t) return null; const persen=Math.round(b/t*100); return {persen,pred:pred(persen),lengkap:!!(rec.W&&rec.S)};
 }
-const kurangText = (p,kode) => kode.map(i=>NAMA[p]+": "+DATA[p][i][1]).join("; ") || "-";
+const kurangText = (p,kode,k) => kode.map(i=>NAMA[p]+": "+dl(p,k)[i][1]).join("; ") || "-";
 const gabung = a => a.join("; ");
 const PH = {"Sangat Menguasai":"sangat menguasai hampir seluruh aspek","Menguasai":"menguasai sebagian besar aspek","Cukup":"cukup menguasai, namun beberapa aspek masih perlu diperbaiki","Perlu Bimbingan":"belum menguasai sejumlah aspek penting"};
 const PENUTUP = {"Sangat Menguasai":"Pertahankan prestasi ini dan teruslah mengamalkannya dalam ibadah sehari-hari.","Menguasai":"Terus berlatih agar semakin sempurna.","Cukup":"Ananda perlu lebih sering berlatih dengan bimbingan guru dan orang tua di rumah.","Perlu Bimbingan":"Ananda memerlukan bimbingan intensif dan pendampingan rutin dari guru dan orang tua."};
-function partNarr(p,d,nama){
-  const m=metrik(p,d.kode), n=NAMA[p].toLowerCase();
+function partNarr(p,d,nama,kl){
+  const m=metrik(p,d.kode), n=(p==="S"&&g12(kl))?"gerakan shalat":NAMA[p].toLowerCase();
   if(!d.kode.length) return `Pada praktik ${n}, ananda ${nama} sangat menguasai seluruh aspek dengan benar dan tertib (capaian 100%, predikat Sangat Menguasai).`;
-  return `Pada praktik ${n}, ananda ${nama} ${PH[m.pred]} (capaian ${m.persen}%, predikat ${m.pred}). Aspek yang perlu ditingkatkan: ${gabung(d.kode.map(i=>DATA[p][i][1]))}.`;
+  return `Pada praktik ${n}, ananda ${nama} ${PH[m.pred]} (capaian ${m.persen}%, predikat ${m.pred}). Aspek yang perlu ditingkatkan: ${gabung(d.kode.map(i=>dl(p,kl)[i][1]))}.`;
 }
 function narasiRec(rec){
   const ps=["W","S"].filter(p=>rec[p]); if(!ps.length) return "";
   const nama=rec.nama||"(nama siswa)", o=overall(rec);
   let t=`Ananda ${nama}${rec.kelas?` dari kelas ${rec.kelas}`:""} telah mengikuti penilaian praktik ${ps.map(p=>NAMA[p].toLowerCase()).join(" dan ")} sesuai tuntunan Tarjih Muhammadiyah. `;
-  t+=ps.map(p=>partNarr(p,rec[p],nama)).join(" ");
+  t+=ps.map(p=>partNarr(p,rec[p],nama,rec.kelas)).join(" ");
   if(ps.length===2) t+=` Secara keseluruhan, capaian ananda ${o.persen}% dengan predikat ${o.pred}.`;
   return t+" "+PENUTUP[o.pred];
 }
@@ -386,7 +402,7 @@ function renderList(el,data,grp){
     const m=d[0].indexOf(" ("), title=m>0?d[0].slice(0,m):d[0], hint=m>0?d[0].slice(m+1):"";
     return `<button type="button" data-g="${grp}" data-i="${i}" class="item w-full text-left rounded-xl border-2 border-emerald-200 bg-emerald-50 p-3 flex items-start gap-3">
       <span class="st shrink-0 mt-0.5 text-xs font-bold rounded-full px-2.5 py-1 bg-emerald-600 text-white whitespace-nowrap"></span>
-      <span class="text-sm"><span class="font-semibold">${title}</span>${hint?`<span class="block text-xs text-emerald-800/70 mt-0.5">${hint}</span>`:""}</span></button>`;
+      <span class="text-sm"><span class="font-semibold"><span class="text-emerald-700">${grp}${i+1}.</span> ${title}</span>${hint?`<span class="block text-xs text-emerald-800/70 mt-0.5">${hint}</span>`:""}</span></button>`;
   }).join("");
 }
 renderList($("listW"),WUDHU,"W"); renderList($("listS"),SHALAT,"S");
@@ -421,7 +437,13 @@ function fillPilih(){
   $("pilih").innerHTML='<option value="">— Pilih nama siswa —</option>'+l.map((n,i)=>`<option value="${i+1}">${i+1}. ${esc(n)}</option>`).join("");
   $("pilih").value=l[a-1]?String(a):"";
 }
-function lookup(){
+function renderS(){
+  const k=$("kelas").value;
+  renderList($("listS"),dl("S",k),"S");
+  $("tS").textContent = g12(k) ? "B. Kelompok Shalat (Gerakan saja, tanpa bacaan)" : "B. Kelompok Shalat (Gerakan & Bacaan)";
+}
+  function lookup(){
+  renderS();
   const key=mkKey(), r=key?DB.find(x=>x.key===key):null;
   const rn=rosterName($("kelas").value,+$("absen").value);
   if(r){
@@ -495,7 +517,7 @@ function setSync(s){
 function handleErr(e){ if(e&&e.message==="auth"){ toast("Sesi tidak valid. Silakan masuk kembali."); logout(); } else setSync("err"); }
 async function push(rec,p){
   const d=rec[p], m=metrik(p,d.kode);
-  await api("save",{rec:{key:rec.key,kelas:rec.kelas,absen:rec.absen,nama:rec.nama,part:p,data:{penguji:d.penguji,tgl:d.tgl,persen:m.persen,pred:m.pred,kurang:kurangText(p,d.kode),kode:d.kode.join(",")}}});
+  await api("save",{rec:{key:rec.key,kelas:rec.kelas,absen:rec.absen,nama:rec.nama,part:p,data:{penguji:d.penguji,tgl:d.tgl,persen:m.persen,pred:m.pred,kurang:kurangText(p,d.kode,rec.kelas),kode:d.kode.join(",")}}});
   d.pend=false; saveDB();
 }
 function fromRow(x){
@@ -551,7 +573,7 @@ function ringkas(list){
     return [k,x.length,x.filter(r=>r.W).length,x.filter(r=>r.S).length,c["Sangat Menguasai"]||0,c["Menguasai"]||0,c["Cukup"]||0,c["Perlu Bimbingan"]||0];
   }).filter(Boolean);
 }
-const catatan = r => ["W","S"].filter(p=>r[p]).map(p=>kurangText(p,r[p].kode)).filter(x=>x!=="-").join("; ") || "Tidak ada catatan kekurangan";
+const catatan = r => ["W","S"].filter(p=>r[p]).map(p=>kurangText(p,r[p].kode,r.kelas)).filter(x=>x!=="-").join("; ") || "Tidak ada catatan kekurangan";
 const finalTxt = r => { const o=overall(r); return o ? `${o.pred} ${o.persen}%`+(o.lengkap?"":" (sebagian)") : "-"; };
 function cellP(r,p){
   if(!r[p]) return '<span class="text-xs text-emerald-800/60">Belum dinilai</span>';
@@ -573,8 +595,8 @@ function exportXlsx(){
   const sum=XLSX.utils.aoa_to_sheet([["Kelas","Jumlah Siswa","Wudhu Dinilai","Shalat Dinilai","Sangat Menguasai","Menguasai","Cukup","Perlu Bimbingan"],...ringkas(d)]);
   sum["!cols"]=[{wch:16},{wch:13},{wch:14},{wch:14},{wch:17},{wch:12},{wch:8},{wch:16}];
   XLSX.utils.book_append_sheet(wb,sum,"Ringkasan");
-  const hp=p=>[NAMA[p]+" - Penguji",NAMA[p]+" - Tanggal",NAMA[p]+" - %",NAMA[p]+" - Predikat",...DATA[p].map((x,i)=>p+(i+1)+" "+x[1])];
-  const head=["No","Kelas","No. Absen","Nama Siswa",...hp("W"),...hp("S"),"Capaian Akhir (%)","Predikat Akhir","Catatan Evaluasi"];
+    const hp=(p,k)=>[NAMA[p]+" - Penguji",NAMA[p]+" - Tanggal",NAMA[p]+" - %",NAMA[p]+" - Predikat",...dl(p,k).map((x,i)=>p+(i+1)+" "+x[1])];
+  const mkHead=k=>["No","Kelas","No. Absen","Nama Siswa",...hp("W",k),...hp("S",k),"Capaian Akhir (%)","Predikat Akhir","Catatan Evaluasi"];
   kelasList().forEach(k=>{
     const x=d.filter(r=>r.kelas===k); if(!x.length) return;
     const rows=x.map((r,i)=>{ const o=overall(r); return [i+1,r.kelas,r.absen,r.nama,...partCells(r,"W"),...partCells(r,"S"),o?o.persen:"",o?o.pred+(o.lengkap?"":" (sebagian)"):"",narasiRec(r)]; });
@@ -603,7 +625,7 @@ function partTable(p,rec){
   const d=rec[p], title=NAMA[p], tdS="border:1px solid #444;padding:2px 5px;font-size:10.5px";
   if(!d) return `<div><div style="font-weight:bold;font-size:12px;margin-bottom:3px">${title}</div><div style="border:1px dashed #888;padding:16px;text-align:center;font-size:11px;color:#666">Belum dinilai</div></div>`;
   const m=metrik(p,d.kode), set=new Set(d.kode);
-  const rows=DATA[p].map((x,i)=>`<tr><td style="${tdS}">${cap(x[1])}</td><td style="${tdS};text-align:center;white-space:nowrap;${set.has(i)?"background:#ffe4d6;font-weight:bold;color:#b45309":"color:#166534"}">${set.has(i)?"Perlu bimbingan":"Baik"}</td></tr>`).join("");
+  const rows=dl(p,rec.kelas).map((x,i)=>`<tr><td style="${tdS}">${cap(x[1])}</td><td style="${tdS};text-align:center;white-space:nowrap;${set.has(i)?"background:#ffe4d6;font-weight:bold;color:#b45309":"color:#166534"}">${set.has(i)?"Perlu bimbingan":"Baik"}</td></tr>`).join("");
   return `<div><div style="font-weight:bold;font-size:12px">${title} - ${m.pred} (${m.persen}%)</div><div style="font-size:10px;margin-bottom:3px">Penguji: ${esc(d.penguji)} | ${fmtTgl(d.tgl)}</div>
     <table style="width:100%;border-collapse:collapse"><thead><tr style="background:#dcefe2"><th style="${tdS}">Aspek yang dinilai</th><th style="${tdS}">Capaian</th></tr></thead><tbody>${rows}</tbody></table></div>`;
 }
@@ -714,15 +736,16 @@ function grafikHTML(){
   html+=gBox(k?"Rata-rata Capaian "+esc(k):t?"Perbandingan Rata-rata per Kelas (Tingkat "+t+")":"Perbandingan Rata-rata per Tingkat (Kelas 1-6)",legend+(cmp||"Belum ada data."));
 
   // 3. Per aspek
-  let lemah=null;
-  ["W","S"].forEach(p=>{
-    const rs=d.filter(r=>r[p]);
-    const inner=rs.length?DATA[p].map((x,i)=>{
+    let lemah=null;
+  [["W",null,""],["S",true," - Kelas 1-2 (gerakan)"],["S",false," - Kelas 3-6 (gerakan & bacaan)"]].forEach(([p,g,suf])=>{
+    const rs=d.filter(r=>r[p]&&(g===null||g12(r.kelas)===g));
+    if(!rs.length&&g!==null) return;
+    const inner=rs.length?dl(p,g?1:3).map((x,i)=>{
       const baik=rs.filter(r=>!r[p].kode.includes(i)).length, v=Math.round(baik/rs.length*100);
       if(!lemah||v<lemah.v) lemah={v,p,t:x[1]};
       return gBar(cap(x[1]),v,v>=75?"#059669":v>=60?"#f59e0b":"#f97316",`${v}% baik`);
     }).join(""):'<div style="font-size:12px">Belum ada penilaian.</div>';
-    html+=gBox(`Capaian per Aspek ${NAMA[p]} (% siswa yang sudah baik)`,inner);
+    html+=gBox(`Capaian per Aspek ${NAMA[p]}${suf} (% siswa yang sudah baik)`,inner);
   });
   if(lemah) html+=gBox("Kesimpulan Otomatis",`<div style="font-size:12.5px;line-height:1.6;text-align:justify">Pada cakupan <b>${esc(label)}</b>, rata-rata capaian wudhu <b>${avg(pc(d,"W"))}%</b> dan shalat <b>${avg(pc(d,"S"))}%</b>. Aspek yang paling perlu mendapat bimbingan adalah <b>${esc(NAMA[lemah.p].toLowerCase())}: ${esc(lemah.t)}</b> (hanya ${lemah.v}% siswa yang sudah baik). Aspek ini sebaiknya menjadi prioritas pembinaan.</div>`);
   return html;
@@ -831,7 +854,7 @@ function mKelasHTML(o){
   }
   const legend=`<div style="display:grid;grid-template-columns:${ps.map(()=>"1fr").join(" ")};gap:10px;margin:6px 0">`+
     ps.map(p=>`<div style="border:1px solid #bbb;border-radius:4px;padding:4px 6px"><div style="font-weight:bold;font-size:10px">${NAMA[p]}</div>
-      <div style="column-count:${ps.length===1?3:2};column-gap:8px;font-size:8.5px;line-height:1.3">${DATA[p].map((x,i)=>`<div style="break-inside:avoid"><b>${p}${i+1}</b> ${cap(x[1])}</div>`).join("")}</div></div>`).join("")+`</div>`;
+      <div style="column-count:${ps.length===1?3:2};column-gap:8px;font-size:8.5px;line-height:1.3">${dl(p,o.kelas).map((x,i)=>`<div style="break-inside:avoid"><b>${p}${i+1}</b> ${cap(x[1])}</div>`).join("")}</div></div>`).join("")+`</div>`;
   return `<div>${mHead("LEMBAR PENILAIAN PRAKTIK IBADAH - REKAP KELAS","Wudhu dan Shalat Menurut Tuntunan Tarjih Muhammadiyah - ISMUBA",true)}
     <div style="font-size:11px;margin-bottom:4px">Kelas: <b>${esc(o.kelas)||LN(35)}</b> &nbsp;&nbsp; Tanggal: ${o.tgl?fmtTgl(o.tgl):LN(35)} &nbsp;&nbsp; Penguji: ${LN(70)}</div>
     <div style="font-size:10.5px;background:#fff7e0;border:1px solid #e5c76b;padding:3px 6px;border-radius:4px"><b>Cara mengisi:</b> beri tanda <b>✗</b> pada kotak aspek yang <b>KURANG</b>. Kotak dikosongkan berarti <b>BAIK</b>. Hitung jumlah ✗ pada kolom "Kurang", lalu lihat predikat pada tabel di bawah.</div>
@@ -853,7 +876,7 @@ function mIndivHTML(o){
   const part=p=>`<div style="font-weight:bold;font-size:12px;margin:8px 0 3px">${p==="W"?"A":"B"}. ${NAMA[p]}</div>
     <table style="width:100%;border-collapse:collapse;font-size:10.5px"><thead><tr style="background:#dcefe2">
       <th style="${bd}width:9mm">Kode</th><th style="${bd}">Aspek yang dinilai</th><th style="${bd}width:14mm">Baik</th><th style="${bd}width:14mm">Kurang</th></tr></thead>
-      <tbody>${DATA[p].map((x,i)=>`<tr><td style="${bd}text-align:center">${p}${i+1}</td><td style="${bd}">${cap(x[1])}</td><td style="${bd}text-align:center">${BOX}</td><td style="${bd}text-align:center">${BOX}</td></tr>`).join("")}</tbody></table>
+      <tbody>${dl(p,o.kelas).map((x,i)=>`<tr><td style="${bd}text-align:center">${p}${i+1}</td><td style="${bd}">${cap(x[1])}</td><td style="${bd}text-align:center">${BOX}</td><td style="${bd}text-align:center">${BOX}</td></tr>`).join("")}</tbody></table>
     <div style="font-size:10.5px;margin-top:4px">Jumlah aspek kurang: ${LN(10)} dari ${DATA[p].length} &nbsp; Capaian: ${LN(10)} % &nbsp; Predikat: ${BOX} Sangat Menguasai ${BOX} Menguasai ${BOX} Cukup ${BOX} Perlu Bimbingan</div>`;
   return list.map((s,i)=>`<div style="${i?"page-break-before:always;":""}border:2px solid #166534;padding:10px 14px">
     ${mHead("FORMULIR PENILAIAN PRAKTIK IBADAH (INDIVIDU)","Wudhu dan Shalat Menurut Tuntunan Tarjih Muhammadiyah - ISMUBA",true)}
@@ -1019,7 +1042,7 @@ function bRender(){
   /* keterangan kode aspek */
   $("bLegend").innerHTML = `<details class="bg-white rounded-xl border border-emerald-100 px-4 py-2 mb-3 text-xs">
     <summary class="font-semibold text-emerald-900 cursor-pointer">Arti kode aspek (ketuk untuk melihat)</summary>
-    <div class="grid sm:grid-cols-2 gap-3 mt-2">${ps.map(p => `<div><b>${NAMA[p]}</b>${DATA[p].map((x,i)=>`<div><b>${p}${i+1}</b> ${cap(x[1])}</div>`).join("")}</div>`).join("")}</div></details>`;
+    <div class="grid sm:grid-cols-2 gap-3 mt-2">${ps.map(p => `<div><b>${NAMA[p]}</b>${dl(p,k).map((x,i)=>`<div><b>${p}${i+1}</b> ${cap(x[1])}</div>`).join("")}</div>`).join("")}</div></details>`;
 
   /* header */
   const h1 = `<tr>
@@ -1030,7 +1053,7 @@ function bRender(){
     ${ps.map(p => `<th rowspan="2" ${th} style="${BST(null,0,4,"#fff4d6")};min-width:52px">Kurang ${p}</th>`).join("")}
     <th rowspan="2" ${th} style="${BST(null,0,4,"#d1fae5")};min-width:120px">Predikat</th>
     <th rowspan="2" ${th} style="${BST(null,0,4,"#d1fae5")};min-width:70px">Status</th></tr>`;
-  const h2 = `<tr>${ps.map(p => DATA[p].map((x,i) => `<th ${th} title="${esc(cap(x[1]))}" style="${BST(null,30,4,GCOL[p])};height:150px;min-width:38px;padding:4px 0;vertical-align:bottom"><div style="writing-mode:vertical-rl;transform:rotate(180deg);white-space:nowrap;margin:0 auto;font-size:11px;font-weight:600;line-height:1.1">${i+1}. ${esc(BSHORT[p][i])}</div></th>`).join("")).join("")}</tr>`;
+  const h2 = `<tr>${ps.map(p => dl(p,k).map((x,i) => `<th ${th} title="${esc(cap(x[1]))}" style="${BST(null,30,4,GCOL[p])};height:150px;min-width:38px;padding:4px 0;vertical-align:bottom"><div style="writing-mode:vertical-rl;transform:rotate(180deg);white-space:nowrap;margin:0 auto;font-size:11px;font-weight:600;line-height:1.1">${i+1}. ${esc(bsh(p,k)[i])}</div></th>`).join("")).join("")}</tr>`;
 
   /* baris siswa */
   let rows = "";
