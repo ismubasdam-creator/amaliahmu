@@ -109,7 +109,6 @@
     <button id="tabB" onclick="showTab('b')">👥 Rombongan</button>
     <button id="tabR" onclick="showTab('r')">📊 Rekap Kelas</button>
     <button id="tabG" onclick="showTab('g')">📈 Grafik Laporan</button>
-        <button id="tabG" onclick="showTab('g')">📈 Grafik Laporan</button>
     <button id="tabM" onclick="showTab('m')">🖨 Instrumen Manual</button>
     <button onclick="openGuide()" class="px-4 py-2 rounded-xl text-sm font-semibold bg-white border border-emerald-300 text-emerald-900">📖 Panduan Bacaan Tarjih</button>
   </div>
@@ -320,7 +319,7 @@ const SHALAT = [
 const SHALAT_G = [
  ["Takbiratul Ihram (Gerakan mengangkat tangan kurang tepat)","takbiratul ihram (gerakan kurang tepat)"],
  ["Tuma'ninah (Berdiri belum tenang / terburu-buru)","tuma'ninah saat berdiri (belum tenang/terburu-buru)"],
- ["Bersedekap (Posisi tangan bersedekap kurang tepat)","bersedekap bagian 2 (posisi tangan kurang tepat)"],
+ ["Bersedekap (Posisi tangan bersedekap kurang tepat)","bersedekap (posisi tangan kurang tepat)"],
  ["Rukuk (Punggung belum lurus / kurang tuma'ninah)","gerakan ruku' (punggung belum lurus/kurang tuma'ninah)"],
  ["I'tidal (Berdiri belum tegak / kurang tuma'ninah)","gerakan i'tidal (belum tegak/kurang tuma'ninah)"],
  ["Sujud (Dahi, hidung, telapak tangan, lutut, atau ujung kaki belum sempurna)","gerakan sujud (anggota sujud belum sempurna)"],
@@ -591,7 +590,56 @@ function renderRekap(){
 const fileTag = () => ($("fKelas").value||"Semua_Kelas").replace(/\s+/g,"_")+"_"+today();
 const partCells=(r,p)=>{ const d=r[p]; if(!d) return ["Belum dinilai","","","",...DATA[p].map(()=>"")]; const m=metrik(p,d.kode); return [d.penguji,fmtTgl(d.tgl),m.persen,m.pred,...DATA[p].map((_,i)=>d.kode.includes(i)?"Kurang":"Baik")]; };
 
-
+function unduhCsv(d){
+  const v=(r,p)=>nP(r,p)<0?"":nP(r,p);
+  const b=[["No","Kelas","No. Absen","Nama Siswa","Nilai Wudhu","Nilai Shalat","Predikat Akhir","Catatan"],...d.map((r,i)=>[i+1,r.kelas,r.absen,r.nama,v(r,"W"),v(r,"S"),finalTxt(r),catatan(r)])];
+  const csv="\ufeff"+b.map(x=>x.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(";")).join("\r\n");
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"}));
+  a.download="Rekap_AmaliahMu_"+fileTag()+".csv";
+  document.body.appendChild(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},2000);
+}
+function exportXlsx(){
+  try{ buatXlsx(); }
+  catch(e){ console.error(e); toast("Gagal membuat Excel: "+(e&&e.message?e.message:e)); }
+}
+function buatXlsx(){
+  const d=rekapData(); if(!d.length) return toast("Belum ada data untuk diunduh");
+  if(!window.XLSX){ toast("Pustaka Excel diblokir, mengunduh format CSV (bisa dibuka di Excel)"); return unduhCsv(d); }
+  const wb=XLSX.utils.book_new();
+  const sum=XLSX.utils.aoa_to_sheet([["Kelas","Jumlah Siswa","Wudhu Dinilai","Shalat Dinilai","Sangat Menguasai","Menguasai","Cukup","Perlu Bimbingan"],...ringkas(d)]);
+  sum["!cols"]=[{wch:16},{wch:13},{wch:14},{wch:14},{wch:17},{wch:12},{wch:8},{wch:16}];
+  XLSX.utils.book_append_sheet(wb,sum,"Ringkasan");
+  const hp=(p,k)=>[NAMA[p]+" - Penguji",NAMA[p]+" - Tanggal",NAMA[p]+" - %",NAMA[p]+" - Predikat",...dl(p,k).map((x,i)=>p+(i+1)+" "+x[1])];
+  const head=k=>["No","Kelas","No. Absen","Nama Siswa","Nilai Wudhu","Nilai Shalat","Predikat Akhir",...hp("W",k),...hp("S",k),"Catatan Evaluasi"];
+  kelasList().forEach(k=>{
+    const x=d.filter(r=>r.kelas===k); if(!x.length) return;
+    const rows=x.map((r,i)=>{ const o=overall(r); return [i+1,r.kelas,r.absen,r.nama,nP(r,"W")<0?"":nP(r,"W"),nP(r,"S")<0?"":nP(r,"S"),o?o.pred+(o.lengkap?"":" (sebagian)"):"",...partCells(r,"W"),...partCells(r,"S"),narasiRec(r)]; });
+    const ws=XLSX.utils.aoa_to_sheet([head(k),...rows]);
+    ws["!cols"]=[{wch:5},{wch:14},{wch:9},{wch:28},{wch:12},{wch:12},{wch:22},{wch:24}];
+    XLSX.utils.book_append_sheet(wb,ws,k);
+  });
+  const out=XLSX.write(wb,{bookType:"xlsx",type:"array"});
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(new Blob([out],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}));
+  a.download="Rekap_AmaliahMu_"+fileTag()+".xlsx";
+  document.body.appendChild(a); a.click();
+  setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },2000);
+}
+function exportPdf(){
+  const J=window.jspdf; if(!J||!J.jsPDF) return toast("Pustaka PDF belum termuat. Periksa koneksi internet.");
+  const d=rekapData(); if(!d.length) return toast("Belum ada data untuk diunduh");
+  const doc=new J.jsPDF({orientation:"landscape",unit:"mm",format:"a4"}), f=$("fKelas").value||"Semua Kelas";
+  doc.setFont("helvetica","bold"); doc.setFontSize(14); doc.text(CONFIG.sekolah,14,14);
+  doc.setFont("helvetica","normal"); doc.setFontSize(10); doc.text("Rekap Evaluasi Praktik Ibadah & Wudhu ISMUBA - "+f,14,20);
+  doc.setFontSize(8); doc.text("Dicetak "+fmtTgl(today())+" oleh "+SESSION.name,14,25);
+  doc.autoTable({startY:29,head:[["Kelas","Siswa","Wudhu dinilai","Shalat dinilai","Sangat Menguasai","Menguasai","Cukup","Perlu Bimbingan"]],body:ringkas(d).map(r=>r.map(String)),styles:{fontSize:8},headStyles:{fillColor:[4,120,87]}});
+  const pc=(r,p)=>{ if(!r[p]) return "Belum dinilai"; const m=metrik(p,r[p].kode); return m.pred+" "+m.persen+"%\n("+r[p].penguji+")"; };
+  doc.autoTable({startY:doc.lastAutoTable.finalY+6,head:[["No","Absen","Nama Siswa","Kelas","Wudhu","Shalat","Nilai Wudhu","Nilai Shalat","Predikat Akhir","Catatan Evaluasi"]],
+    body:d.map((r,i)=>[String(i+1),r.absen,r.nama,r.kelas,pc(r,"W"),pc(r,"S"),nPTxt(r,"W"),nPTxt(r,"S"),finalTxt(r),catatan(r)]),
+    styles:{fontSize:7.5,cellPadding:1.5},headStyles:{fillColor:[4,120,87]},columnStyles:{9:{cellWidth:70}}});
+  doc.save("Rekap_AmaliahMu_"+fileTag()+".pdf");
+}
 /* ============ LEMBAR HASIL EVALUASI (CETAK) ============ */
 function partTable(p,rec){
   const d=rec[p], title=NAMA[p], tdS="border:1px solid #444;padding:2px 5px;font-size:10.5px";
