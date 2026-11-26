@@ -562,6 +562,8 @@ function muat(key){
 }
 
 /* ============ REKAP ============ */
+const nP = (r,p) => r[p] ? metrik(p,r[p].kode).persen : -1;
+const nPTxt = (r,p) => { const n=nP(r,p); return n<0 ? "-" : String(n); };
 function rekapData(){
   const kl=kelasList(), f=$("fKelas").value;
   return DB.filter(r=>!f||r.kelas===f).sort((a,b)=>kl.indexOf(a.kelas)-kl.indexOf(b.kelas)||(+a.absen||999)-(+b.absen||999)||String(a.nama).localeCompare(b.nama));
@@ -584,41 +586,11 @@ function renderRekap(){
   const d=rekapData(), sm=ringkas(DB), th="p-2 border border-emerald-200 bg-emerald-100 text-left", td="p-2 border border-emerald-100 align-top";
   setSync();
   $("sumKelas").innerHTML=sm.length?`<table class="w-full text-sm bg-white"><thead><tr>${["Kelas","Siswa","Wudhu dinilai","Shalat dinilai","Sangat Menguasai","Menguasai","Cukup","Perlu Bimbingan"].map(x=>`<th class="${th}">${x}</th>`).join("")}</tr></thead><tbody>${sm.map(r=>`<tr>${r.map(v=>`<td class="${td}">${v}</td>`).join("")}</tr>`).join("")}</tbody></table>`:"";
-  $("tblRekap").innerHTML=d.length?`<thead><tr>${["No","Absen","Nama","Kelas","Wudhu","Shalat","Predikat akhir","Catatan",""].map(x=>`<th class="${th}">${x}</th>`).join("")}</tr></thead><tbody>${d.map((r,i)=>`<tr><td class="${td}">${i+1}</td><td class="${td}">${esc(r.absen)}</td><td class="${td} font-semibold">${esc(r.nama)}</td><td class="${td}">${esc(r.kelas)}</td><td class="${td}">${cellP(r,"W")}</td><td class="${td}">${cellP(r,"S")}</td><td class="${td} text-xs font-semibold">${esc(finalTxt(r))}</td><td class="${td} text-xs min-w-[220px]">${esc(catatan(r))}</td><td class="${td} whitespace-nowrap"><button data-k="${esc(r.key)}" onclick="muat(this.dataset.k)" class="px-2 py-1 rounded bg-emerald-700 text-white text-xs">Buka</button> <button data-k="${esc(r.key)}" onclick="cetakKey(this.dataset.k)" class="px-2 py-1 rounded bg-amber-500 text-white text-xs">Cetak</button> <button data-k="${esc(r.key)}" onclick="hapus(this.dataset.k)" class="px-2 py-1 rounded border border-orange-300 text-orange-700 text-xs">Hapus</button></td></tr>`).join("")}</tbody>`:`<tbody><tr><td class="p-4 text-sm text-emerald-800">Belum ada data penilaian${$("fKelas").value?" untuk kelas ini":""}.</td></tr></tbody>`;
+  $("tblRekap").innerHTML=d.length?`<thead><tr>${["No","Absen","Nama","Kelas","Wudhu","Shalat","Nilai Wudhu","Nilai Shalat","Predikat akhir","Catatan",""].map(x=>`<th class="${th}">${x}</th>`).join("")}</tr></thead><tbody>${d.map((r,i)=>`<tr><td class="${td}">${i+1}</td><td class="${td}">${esc(r.absen)}</td><td class="${td} font-semibold">${esc(r.nama)}</td><td class="${td}">${esc(r.kelas)}</td><td class="${td}">${cellP(r,"W")}</td><td class="${td}">${cellP(r,"S")}</td><td class="${td} font-bold text-base text-center">${nPTxt(r,"W")}</td><td class="${td} font-bold text-base text-center">${nPTxt(r,"S")}</td><td class="${td} text-xs font-semibold">${esc(finalTxt(r))}</td><td class="${td} text-xs min-w-[220px]">${esc(catatan(r))}</td><td class="${td} whitespace-nowrap"><button data-k="${esc(r.key)}" onclick="muat(this.dataset.k)" class="px-2 py-1 rounded bg-emerald-700 text-white text-xs">Buka</button> <button data-k="${esc(r.key)}" onclick="cetakKey(this.dataset.k)" class="px-2 py-1 rounded bg-amber-500 text-white text-xs">Cetak</button> <button data-k="${esc(r.key)}" onclick="hapus(this.dataset.k)" class="px-2 py-1 rounded border border-orange-300 text-orange-700 text-xs">Hapus</button></td></tr>`).join("")}</tbody>`:`<tbody><tr><td class="p-4 text-sm text-emerald-800">Belum ada data penilaian${$("fKelas").value?" untuk kelas ini":""}.</td></tr></tbody>`;
 }
 const fileTag = () => ($("fKelas").value||"Semua_Kelas").replace(/\s+/g,"_")+"_"+today();
 const partCells=(r,p)=>{ const d=r[p]; if(!d) return ["Belum dinilai","","","",...DATA[p].map(()=>"")]; const m=metrik(p,d.kode); return [d.penguji,fmtTgl(d.tgl),m.persen,m.pred,...DATA[p].map((_,i)=>d.kode.includes(i)?"Kurang":"Baik")]; };
-function exportXlsx(){
-  if(!window.XLSX) return toast("Pustaka Excel belum termuat. Periksa koneksi internet.");
-  const d=rekapData(); if(!d.length) return toast("Belum ada data untuk diunduh");
-  const wb=XLSX.utils.book_new();
-  const sum=XLSX.utils.aoa_to_sheet([["Kelas","Jumlah Siswa","Wudhu Dinilai","Shalat Dinilai","Sangat Menguasai","Menguasai","Cukup","Perlu Bimbingan"],...ringkas(d)]);
-  sum["!cols"]=[{wch:16},{wch:13},{wch:14},{wch:14},{wch:17},{wch:12},{wch:8},{wch:16}];
-  XLSX.utils.book_append_sheet(wb,sum,"Ringkasan");
-    const hp=(p,k)=>[NAMA[p]+" - Penguji",NAMA[p]+" - Tanggal",NAMA[p]+" - %",NAMA[p]+" - Predikat",...dl(p,k).map((x,i)=>p+(i+1)+" "+x[1])];
-  const mkHead=k=>["No","Kelas","No. Absen","Nama Siswa",...hp("W",k),...hp("S",k),"Capaian Akhir (%)","Predikat Akhir","Catatan Evaluasi"];
-  kelasList().forEach(k=>{
-    const x=d.filter(r=>r.kelas===k); if(!x.length) return;
-    const rows=x.map((r,i)=>{ const o=overall(r); return [i+1,r.kelas,r.absen,r.nama,...partCells(r,"W"),...partCells(r,"S"),o?o.persen:"",o?o.pred+(o.lengkap?"":" (sebagian)"):"",narasiRec(r)]; });
-    const ws=XLSX.utils.aoa_to_sheet([head,...rows]); ws["!cols"]=[{wch:5},{wch:14},{wch:9},{wch:28},{wch:24}];
-    XLSX.utils.book_append_sheet(wb,ws,k);
-  });
-  XLSX.writeFile(wb,"Rekap_AmaliahMu_"+fileTag()+".xlsx");
-}
-function exportPdf(){
-  const J=window.jspdf; if(!J||!J.jsPDF) return toast("Pustaka PDF belum termuat. Periksa koneksi internet.");
-  const d=rekapData(); if(!d.length) return toast("Belum ada data untuk diunduh");
-  const doc=new J.jsPDF({orientation:"landscape",unit:"mm",format:"a4"}), f=$("fKelas").value||"Semua Kelas";
-  doc.setFont("helvetica","bold"); doc.setFontSize(14); doc.text(CONFIG.sekolah,14,14);
-  doc.setFont("helvetica","normal"); doc.setFontSize(10); doc.text("Rekap Evaluasi Praktik Ibadah & Wudhu ISMUBA - "+f,14,20);
-  doc.setFontSize(8); doc.text("Dicetak "+fmtTgl(today())+" oleh "+SESSION.name,14,25);
-  doc.autoTable({startY:29,head:[["Kelas","Siswa","Wudhu dinilai","Shalat dinilai","Sangat Menguasai","Menguasai","Cukup","Perlu Bimbingan"]],body:ringkas(d).map(r=>r.map(String)),styles:{fontSize:8},headStyles:{fillColor:[4,120,87]}});
-  const pc=(r,p)=>{ if(!r[p]) return "Belum dinilai"; const m=metrik(p,r[p].kode); return m.pred+" "+m.persen+"%\n("+r[p].penguji+")"; };
-  doc.autoTable({startY:doc.lastAutoTable.finalY+6,head:[["No","Absen","Nama Siswa","Kelas","Wudhu","Shalat","Predikat Akhir","Catatan Evaluasi"]],
-    body:d.map((r,i)=>[String(i+1),r.absen,r.nama,r.kelas,pc(r,"W"),pc(r,"S"),finalTxt(r),catatan(r)]),
-    styles:{fontSize:7.5,cellPadding:1.5},headStyles:{fillColor:[4,120,87]},columnStyles:{7:{cellWidth:80}}});
-  doc.save("Rekap_AmaliahMu_"+fileTag()+".pdf");
-}
+
 
 /* ============ LEMBAR HASIL EVALUASI (CETAK) ============ */
 function partTable(p,rec){
